@@ -6,25 +6,29 @@
 
 ### Module list (wip)
 
-- utils
-- keymap
-- tag
-- workspace
-- cmdline
+**Navigation**
+
+* keymap
+* cmdline
+
+**workspace**
+
+* tag
+
+**computer**
+
+* battery
+* network :
+  * manager : `wpa_cli`
+  * checker : check every N min/sec if we are still connected
+* audio
+* display : `xrandr` and `xbacklight`
 
 
+**utils**
 
-- network
-	* manager : `wpa_cli`
-	* checker : check every N min/sec if we are still connected
-
-- volume-manager : `amixer`
-- display-manager : `xrandr` and `xbacklight`
-
-
-- auto-lockandsleep : auto lock and sleep when 5% battery
-- battery-saver : auto hibernate (save battery)
-
+* file reader
+* async execution
 
 
 
@@ -57,6 +61,7 @@ Load all modules but not some module(s) :
 Or for the module selection, use the `require` string system ?
 
 
+
 ### utils
 
 
@@ -83,16 +88,19 @@ Silently set some data for some marked clients (all, or a given match)
 
 ### keymap
 
-Define multiple keymap
- - one safe keymap, with very basic mapping for emergency (with an help popup !)
- - common keymaps for tag/workspace
- - additionnal keymaps to apply on tag/workspace
+Define multiple keymap :
+
+* one safe keymap, with very basic mapping for emergency (with an help popup !)
+* common keymaps for tag/workspace
+* additionnal keymaps to apply on tag/workspace
 
 
 
 ### cmdline
 
 See concept/cmdline.md
+
+
 
 ### clipboard managment
 
