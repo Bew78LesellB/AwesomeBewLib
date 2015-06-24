@@ -72,11 +72,13 @@ Or for the module selection, use the `require` string system ?
 
 ### tag (different types)
 
-
 Tags types:
 * modal (-> moment ?)
 * dialog
 * moment: display the tag, then, with modkey+Escape, dismiss the tag (like a dialog ?)
+
+See concept/tag.md
+
 
 
 ### advanced mark system
