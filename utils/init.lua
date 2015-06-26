@@ -78,6 +78,16 @@ function utils.readFile(path, nbLine)
 	return tab
 end
 
+--TODO: move & secure this function
+function utils.clone(obj)
+	local new = {}
+
+	for k, v in pairs(obj) do
+		new[k] = v
+	end
+	return new
+end
+
 utils.async = require("bewlib.utils.async")
 
 return utils
