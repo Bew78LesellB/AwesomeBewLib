@@ -3,16 +3,18 @@
 --[[ Battery management ]]--
 
 -- Grab environement
---nothing
+-- nothing
 
 -- Module dependencies
 local utils = require("bewlib.utils")
+local eventemitter = require("bewlib.eventemitter")
 
 -- Module environement
 local battery = {
 	name = "BAT0",
 }
 battery.path = "/sys/class/power_supply/" .. battery.name
+battery = eventemitter(battery)
 
 -- private vars
 local defaultInfos = {
@@ -29,7 +31,14 @@ local defaultInfos = {
 local infos = {}
 
 
+--[[
+TODO: make update time variable, ex :
+update :
+- status = 2 sec
+- other = 15 sec
 
+TODO: put getters in table, for easier and generic access
+]]--
 
 --- Get the first line of specified file
 -- @param path the file path to read from
@@ -128,16 +137,17 @@ end
 
 --- Update all battery dynamics informations
 local function updateDynamicsInfos()
-	local oldstatus = infos.status
+	local old = utils.clone(infos)
 	infos.status = infos.present and getStatus() or defaultInfos.status
-	if oldstatus ~= infos.status then
-		--battery:emit_signal("status::changed", infos.status)
-	end
-
-	infos.time = infos.present and getTimeLeft() or defaultInfos.time 
+	infos.timeLeft = infos.present and getTimeLeft() or defaultInfos.time 
 	infos.perc = infos.present and getPercentage() or defaultInfos.perc
-	utils.toast("got percentage: " .. infos.perc)
 	infos.watt = infos.present and getWatt() or defaultInfos.watt
+
+	--TODO: generic emitter
+	if old.perc and old.perc ~= infos.perc then battery:emit("percentage::changed", infos.perc) end
+	if old.timeLeft and old.timeLeft ~= infos.timeLeft then battery:emit("timeLeft::changed", infos.timeLeft) end
+	if old.status and old.status ~= infos.status then battery:emit("status::changed", infos.status) end
+	if old.watt and old.watt ~= infos.watt then battery:emit("watt::changed", infos.watt) end
 end
 
 --- Update all battery infos
