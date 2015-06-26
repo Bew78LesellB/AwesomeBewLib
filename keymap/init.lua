@@ -4,7 +4,7 @@ local awful = require("awful")
 local toast = require("bewlib.utils").toast
 
 -- Module environement
-local keymap = {}
+local keymap = { mt = {} }
 
 --[[ Apply flags ]]--
 keymap.SET = 0x1
@@ -42,6 +42,7 @@ function keymap:addBind (bindOpt)
 		return nil
 	end
 
+	--TODO: bind.modifier
 	bind.comment = type(bindOpt.comment) == "string" and bindOpt.comment or ""
 	bind.hashtags = type(bindOpt.hashtags) == "string" and bindOpt.hashtags or ""
 	bind.cmd = type(bindOpt.cmd) == "string" and bindOpt.cmd or nil
@@ -55,9 +56,10 @@ end
 
 
 function keymap:apply(flag)
+	--TODO: use flag == "set" or flag == merge etc..
 	if flag == keymap.SET then -- replace the current keymap
-	else if flag == keymap.MERGE then -- add to the current keymap
-	else if flag == keymap.KEYGRABBER then -- replace like in keygrabber (for a moment)
+	elseif flag == keymap.MERGE then -- add to the current keymap
+	elseif flag == keymap.KEYGRABBER then -- replace like in keygrabber (for a moment)
 	end
 end
 

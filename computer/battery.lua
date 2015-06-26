@@ -3,109 +3,183 @@
 --[[ Battery management ]]--
 
 -- Grab environement
-local capi = {
-	timer = timer
-}
+--nothing
 
 -- Module dependencies
 local utils = require("bewlib.utils")
 
 -- Module environement
-local mod = {}
-
--- config vars
-local settings = {
-	name = "BAT0"
+local battery = {
+	name = "BAT0",
 }
+battery.path = "/sys/class/power_supply/" .. battery.name
 
 -- private vars
-local bat_info = {
+local defaultInfos = {
 	present = false,
-	techno = "",
-	serial_nb = "",
-	manufacturer = "",
-	modelName = "",
+	--techno = "Unknown",
+	--serial_nb = "Unknown",
+	--manufacturer = "Unknown",
+	--modelName = "Unknown",
 	status = "Not present",
 	perc = "N/A",
-	time = "N/A",
+	timeLeft = "N/A",
 	watt = "N/A"
 }
+local infos = {}
 
-local function updateBatteryInfos()
-	function firstline(path)
-		return utils.readFile(path, 1)[1]
-	end
 
-	local bpath  = "/sys/class/power_supply/" .. settings.name
 
-	local present = firstline(bpath .. "/present")
-	bat_info.present = present == "1" and true or false
 
-	if bat_info.present then
-		local rate  = firstline(bpath .. "/power_now") or firstline(bpath .. "/current_now")
-		local ratev = firstline(bpath .. "/voltage_now")
-		local rem   = firstline(bpath .. "/energy_now") or firstline(bpath .. "/charge_now")
-		local tot   = firstline(bpath .. "/energy_full") or firstline(bpath .. "/charge_full")
-
-		-- Status
-		bat_info.status = firstline(bpath .. "/status") or "N/A"
-
-		-- Time to empty/full
-		rate  = tonumber(rate) or 1
-		ratev = tonumber(ratev)
-		rem   = tonumber(rem)
-		tot   = tonumber(tot)
-
-		local time_rat = 0
-		if bat_info.status == "Charging" then
-			time_rat = (tot - rem) / rate
-		elseif bat_info.status == "Discharging" then
-			time_rat = rem / rate
-		end
-
-		local hrs = math.floor(time_rat)
-		if hrs < 0 then hrs = 0 elseif hrs > 23 then hrs = 23 end
-
-		local min = math.floor((time_rat - hrs) * 60)
-		if min < 0 then min = 0 elseif min > 59 then min = 59 end
-
-		bat_info.time = string.format("%02d:%02d", hrs, min)
-
-		-- Percentage
-		bat_info.perc = tonumber(firstline(bpath .. "/capacity") or "0")
-		if not bat_infos.perc then
-			local rem   = firstline(bpath .. "/energy_now") or firstline(bpath .. "/charge_now")
-			local tot   = firstline(bpath .. "/energy_full") or firstline(bpath .. "/charge_full")
-
-			local perc = (rem / tot) * 100
-			if perc <= 100 then
-				bat_info.perc = perc
-			elseif perc > 100 then
-				bat_info.perc = 100
-			elseif perc < 0 then
-				bat_info.perc = 0
-			end
-		end
-
-		-- Watt
-		if rate ~= nil and ratev ~= nil then
-			bat_infos.watt = string.format("%.2fW", (rate * ratev) / 1e12)
-		else
-			bat_infos.watt = "N/A"
-		end
-	end
+--- Get the first line of specified file
+-- @param path the file path to read from
+-- @return the first line
+local function firstline(path)
+	local file = utils.readFile(path, 1)
+	return file and file[1] or nil
 end
 
-function mod.getInfos(forceUpdate)
-	if forceUpdate then
-		updateBatteryInfos()
+--- Get the battery status
+-- @return the battery status ("Charging" "Discharging" "Full")
+local function getStatus()
+	return firstline(battery.path .. "/status") or defaultInfos.status
+end
+
+--- Test if there is a battery
+-- @return (boolean) true if there is a battery, false otherwise
+local function isPresent()
+	local present = firstline(battery.path .. "/present")
+	return present == "1" and true or false
+end
+
+--- Get time to full or time to empty
+-- @return (string) time to full if charging, time to empty if discharging
+local function getTimeLeft()
+	if not infos.present then return defaultInfos.timeLeft end
+
+	local path = battery.path
+	local rem   = firstline(path .. "/energy_now") or firstline(path .. "/charge_now")
+	local tot   = firstline(path .. "/energy_full") or firstline(path .. "/charge_full")
+	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
+
+	rate  = tonumber(rate) or 1
+	rem   = tonumber(rem)
+	tot   = tonumber(tot)
+	if not rem or not tot then
+		return defaultInfos.timeLeft
 	end
-	return bat_info
+
+	local time_rat = 0
+	if infos.status == "Charging" then
+		time_rat = (tot - rem) / rate
+	elseif infos.status == "Discharging" then
+		time_rat = rem / rate
+	end
+
+	local hrs = math.floor(time_rat)
+	if hrs < 0 then hrs = 0 elseif hrs > 23 then hrs = 23 end
+
+	local min = math.floor((time_rat - hrs) * 60)
+	if min < 0 then min = 0 elseif min > 59 then min = 59 end
+
+	return string.format("%02d:%02d", hrs, min)
 end
 
-function mod.init()
-	updateBatteryInfos()
-	--TODO: init timers
+--- Get battery percentage
+-- @return (number) the battery capacity percentage
+local function getPercentage()
+	local path = battery.path
+	local perc = firstline(path .. "/capacity")
+
+	if perc then
+		return tonumber(perc)
+	end
+
+	local rem = firstline(path .. "/energy_now") or firstline(path .. "/charge_now")
+	local tot = firstline(path .. "/energy_full") or firstline(path .. "/charge_full")
+
+	if not tot or not rem then
+		return defaultInfos.perc
+	end
+
+	perc = (rem / tot) * 100
+	if perc > 100 then return 100 end
+	if perc < 0 then return 0 end
+	return perc
 end
 
-return mod
+--- Get battery power
+-- @return (string) the battery power
+local function getWatt()
+	local path  = battery.path
+	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
+	local ratev = firstline(path .. "/voltage_now")
+
+	rate  = tonumber(rate) or 1
+	ratev = tonumber(ratev)
+
+	if rate and ratev then
+		return string.format("%.2fW", (rate * ratev) / 1e12)
+	end
+	return defaultInfos.watt
+end
+
+--battery:add_signal("status::changed")
+
+--- Update all battery dynamics informations
+local function updateDynamicsInfos()
+	local oldstatus = infos.status
+	infos.status = infos.present and getStatus() or defaultInfos.status
+	if oldstatus ~= infos.status then
+		--battery:emit_signal("status::changed", infos.status)
+	end
+
+	infos.time = infos.present and getTimeLeft() or defaultInfos.time 
+	infos.perc = infos.present and getPercentage() or defaultInfos.perc
+	utils.toast("got percentage: " .. infos.perc)
+	infos.watt = infos.present and getWatt() or defaultInfos.watt
+end
+
+--- Update all battery infos
+function updateAll()
+	infos.present = isPresent()
+	--updateHardwareInfos() --TODO
+	updateDynamicsInfos()
+end
+
+--- Public function to update battery infos
+-- @param flag specify what to update ("all" | "dynamic" | "hardware")
+-- @return (table) the battery infos
+function battery.update(flag)
+	if flag == "all" then
+		updateAll()
+		--elseif flag == "hardware" then
+		--updateHardwareInfos()
+	elseif flag == "dynamic" or not flag then
+		updateDynamicsInfos()
+	end
+	return infos
+end
+
+--- Initialize battery module
+function battery.init(options)
+	if options then
+		if options.name then
+			battery.name = options.name
+		end
+		if options.path then
+			battery.path = options.path
+		end
+	end
+	local update = options and options.update or 30
+
+	updateAll()
+	-- init update timer
+	utils.setInterval(function ()
+		updateDynamicsInfos()
+	end, update)
+end
+
+battery.infos = infos
+
+return battery

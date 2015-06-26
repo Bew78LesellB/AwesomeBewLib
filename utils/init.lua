@@ -10,23 +10,23 @@ local capi = {
 local naughty = require("naughty")
 
 -- Module environement
-local mod = {}
+local utils = {}
 
 --- Create a notification with text 'text'
 -- @param text The content of the notification
 -- @param options The args like naughty.notify
 -- @see naughty
-function mod.toast(text, options)
+function utils.toast(text, options)
 	local options = options or {}
 	options.text = text
 	return naughty.notify(options)
 end
 
---- Run a callback after N milliseconds
+--- Run a callback after N seconds
 -- @param callback The function that'll be called
--- @param timeout N milliseconds to wait before callback exec
+-- @param timeout time to wait before callback exec in second (can be a float)
 -- @return The new timer
-function mod.setTimeout(callback, timeout)
+function utils.setTimeout(callback, timeout)
 	local theTimer = capi.timer({ timeout = timeout })
 	theTimer:connect_signal("timeout", function()
 		theTimer:stop()
@@ -36,16 +36,16 @@ function mod.setTimeout(callback, timeout)
 	return theTimer
 end
 
---- Run a callback every N milliseconds
+--- Run a callback every N seconds
 -- @param callback The function that'll be called
--- @param timeout N milliseconds between callback exec
+-- @param interval time to wait between callback exec in second (can be a float)
 -- @param callAtStart if set, callback will be called at timer start
 -- @return The new timer
-function mod.setInterval(callback, interval, callAtStart)
+function utils.setInterval(callback, interval, callAtStart)
 	local theTimer = capi.timer({ timeout = interval })
 	theTimer:connect_signal("timeout", callback)
 	theTimer:start()
-	if callAtStart then
+	if callAtStart == true then
 		callback()
 	end
 	return theTimer
@@ -56,7 +56,7 @@ end
 -- @param nbLine The number of lines to read
 --    default: read all
 -- @return a table containing the lines read from the file
-function mod.readFile(path, nbLine)
+function utils.readFile(path, nbLine)
 	nbLine = type(nbLine) == "number" and nbLine or false
 	local f = io.open(path)
 	if not f then return nil end
@@ -78,6 +78,6 @@ function mod.readFile(path, nbLine)
 	return tab
 end
 
-mod.async = require("bewlib.utils.async")
+utils.async = require("bewlib.utils.async")
 
-return mod
+return utils
