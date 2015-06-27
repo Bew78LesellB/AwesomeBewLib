@@ -6,21 +6,8 @@ local capi = {
 	timer = timer
 }
 
--- Module dependencies
-local naughty = require("naughty")
-
 -- Module environement
 local utils = {}
-
---- Create a notification with text 'text'
--- @param text The content of the notification
--- @param options The args like naughty.notify
--- @see naughty
-function utils.toast(text, options)
-	local options = options or {}
-	options.text = text
-	return naughty.notify(options)
-end
 
 --- Run a callback after N seconds
 -- @param callback The function that'll be called
@@ -51,11 +38,11 @@ function utils.setInterval(callback, interval, callAtStart)
 	return theTimer
 end
 
---- Read a N lines of a given file
+--- Read N lines of a given file
 -- @param path The file path to read
 -- @param nbLine The number of lines to read
 --    default: read all
--- @return a table containing the lines read from the file
+-- @return (table) containing the lines read from file
 function utils.readFile(path, nbLine)
 	nbLine = type(nbLine) == "number" and nbLine or false
 	local f = io.open(path)
@@ -75,19 +62,12 @@ function utils.readFile(path, nbLine)
 			i = i + 1
 		end
 	end
+	f:close()
 	return tab
 end
 
---TODO: move & secure this function
-function utils.clone(obj)
-	local new = {}
-
-	for k, v in pairs(obj) do
-		new[k] = v
-	end
-	return new
-end
-
 utils.async = require("bewlib.utils.async")
+utils.table = require("bewlib.utils.table")
+utils.toast = require("bewlib.utils.toast")
 
 return utils
