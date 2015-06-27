@@ -133,11 +133,9 @@ local function getWatt()
 	return defaultInfos.watt
 end
 
---battery:add_signal("status::changed")
-
 --- Update all battery dynamics informations
 local function updateDynamicsInfos()
-	local old = utils.clone(infos)
+	local old = utils.table.clone(infos)
 	infos.status = infos.present and getStatus() or defaultInfos.status
 	infos.timeLeft = infos.present and getTimeLeft() or defaultInfos.time 
 	infos.perc = infos.present and getPercentage() or defaultInfos.perc
