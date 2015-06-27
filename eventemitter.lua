@@ -1,6 +1,6 @@
 --[[ EventEmitter ]]--
 
-local eventemitter = { mt = {} }
+local Eventemitter = { mt = {} }
 
 local function on(self, event, func)
 	if not self._events[event] then
@@ -18,7 +18,7 @@ local function emit(self, event, ...)
     end
 end
 
-function eventemitter:new(obj)
+function Eventemitter:new(obj)
 	local newobj = obj or {}
 	newobj._events = {}
 
@@ -33,9 +33,9 @@ function eventemitter:new(obj)
 	return newobj
 end
 
-function eventemitter.mt:__call(...)
-	return eventemitter:new(...)
+function Eventemitter.mt:__call(...)
+	return Eventemitter:new(...)
 end
 
-return setmetatable(eventemitter, eventemitter.mt)
---return setmetatable({}, { __call = function(_, ...) return eventemitter:new(...) end })
+return setmetatable(Eventemitter, Eventemitter.mt)
+--return setmetatable({}, { __call = function(_, ...) return Eventemitter:new(...) end })
