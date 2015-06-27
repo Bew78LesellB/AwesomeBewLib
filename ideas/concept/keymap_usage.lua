@@ -55,18 +55,25 @@ first:setModifiers({
 	-- "A" = "Mod1"
 })
 
-first:addBind({
+first:add({
 	ctrl = { mod = "M", key = "c" },
-	comment = "Launch Chrome",
-	hashtags = "#web #launch",
-	cmd = "chromium"
+	comment = "Client operations",
+	hashtags = "#client #settings",
+	cmd = settings.client.toggle
 })
 
-first:setExitBind({
+first:add({
+	ctrl = { mod = "M", key = "w" },
+	comment = "Workspace/Tag managment",
+	hashtags = "#workspace #ws #settings",
+	cmd = manage.workspace
+})
+
+first:setExit({
 	ctrl = { key = "Escape" },
 	comment = "Exit this keymap",
 	cmd = function (keymap)
-		utils.toast("Exiting from keymap : " .. keymap)
+		utils.toast("Exiting from keymap : " .. keymap.name)
 	end
 })
 
