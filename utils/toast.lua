@@ -17,4 +17,4 @@ local function dotoast(text, options)
 	return naughty.notify(options)
 end
 
-return setmetatable(toast, { __call = function(_, ...) dotoast(...) end })
+return setmetatable(toast, { __call = function(_, ...) return dotoast(...) end })
