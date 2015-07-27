@@ -23,20 +23,25 @@ local defaultModifiers = {
 
 --[[ Usage
 mykeymap:add({
-	ctrl = { mod = "MS", key = "c" },
-	press = function(bind, c)
-		c:kill()
-	end,
+ctrl = { mod = "MS", key = "c" },
+press = function(bind, c)
+c:kill()
+end,
 })
 ]]--
 function kmMethods:add(bind)
-	if not bind then
+	if not bind or not type(bind) == "table" then
 		return
 	end
 
 	local modifier = Keymap.parseModifiers(self._modifiers, bind.ctrl.mod) or {}
 	table.insert(self._keys, {
 		bind = bind,
+		--TODO: awful.button for buttons
+		--
+		--TODO: overload press & release functions
+		--   => access to 'bind' as self  ;)
+		--   ======> aucune utilité ? <=======
 		key = awful.key(modifier, bind.ctrl.key, bind.press, bind.release)
 	})
 
@@ -45,27 +50,86 @@ end
 
 
 
+function kmMethods:get() end
 
+function kmMethods:apply(opt) --TODO: refactor
+	if not opt then opt = {} end
 
+	local mode = opt.mode or "normal"
+	local filter = opt.filter or "key"
 
+	if mode == "normal" then
+		local ret = {}
 
-
-
-
-
-
-
-
-
-
-
-function Keymap.parseModifiers(modifiers, bindMod)
-	if not modifiers or not bindMod then
-		return nil
+		for _, info in ipairs(self._keys) do
+			local tab
+			if filter == "key" and info.key then
+				tab = info.key
+			elseif filter == "button" and info.button then --TODO: indent pas OK
+				tab = info.button
+			end
+			for k, v in ipairs(tab) do
+				table.insert(ret, v)
+			end
+		end
+		return ret
 	end
 end
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+-- >> exemple params :
+--
+-- modifiers = {
+--     M = "Mod4",
+--     C = "Control",
+--     S = "Shift",
+--     A = "Mod1",
+-- }
+--
+-- bindMod = "MS"
+--
+-- >> Return :
+-- return = {
+--     "Mod4",
+--     "Shift",
+-- }
+function Keymap.parseModifiers(modifiers, bindMod)
+	local mod = {}
+	if not modifiers or not bindMod then
+		return nil
+	end
+
+	for i = 1, #bindMod do
+		local char = string.sub(bindMod, i, i)
+		if modifiers[char] then
+			table.insert(mod, modifiers[char])
+		end
+	end
+	return mod
+end
+
+
+
+
+
+function Keymap.apply(name, opt)
+	if not name or not Keymap._keymaps[name] then
+		return nil
+	end
+	return Keymap._keymaps[name]:apply(opt)
+end
 
 
 
@@ -78,7 +142,7 @@ end
 --
 -- Keymap("name")		=> new
 -- Keymap.new("name")	=> new
--- mykeymap:clone("name")	=> clone
+-- mykeymap:clone("new name")	=> clone
 
 -- local first = Keymap.new("Tag Control", { parent = Keymap.safe.tag })
 function Keymap.new(name, options)
@@ -106,32 +170,3 @@ end
 Keymap = setmetatable(Keymap, Keymap.mt)
 
 return Keymap
-
-
-
-
-
-
--- SAVE
---[[
-
-function keymap:addBind (bindOpt)
-	if type(bindOpt) ~= "table" then
-		return nil
-	end
-	local bind = {}
-	bind.ctrl = type(bindOpt.ctrl) == "table" and bindOpt.ctrl or nil
-	if bind.ctrl == nil then
-		return nil
-	end
-
-	--TODO: bind.modifier
-	bind.comment = type(bindOpt.comment) == "string" and bindOpt.comment or ""
-	bind.hashtags = type(bindOpt.hashtags) == "string" and bindOpt.hashtags or ""
-	bind.cmd = type(bindOpt.cmd) == "string" and bindOpt.cmd or nil
-	bind.callback = type(bindOpt.cmd) == "function" and bindOpt.cmd or nil
-
-	table.insert(self.binds, bind)
-	return bind
-end
---]]
