@@ -2,6 +2,7 @@
 
 -- Module dependencies
 local naughty = require("naughty")
+local dump = require("gears.debug").dump_return
 
 -- Module environement
 local toast = {}
@@ -17,4 +18,14 @@ local function dotoast(text, options)
 	return naughty.notify(options)
 end
 
-return setmetatable(toast, { __call = function(_, ...) return dotoast(...) end })
+function toast.debug(obj, options)
+	options = options or {}
+	options.timeout = options.timeout or 5
+	dotoast(dump(obj), options)
+end
+
+return setmetatable(toast, {
+	__call = function(_, ...)
+		return dotoast(...)
+	end
+})
