@@ -13,7 +13,6 @@ local eventemitter = require("bewlib.eventemitter")
 local battery = {
 	name = "BAT0",
 }
-battery.path = "/sys/class/power_supply/" .. battery.name
 battery = eventemitter(battery)
 
 -- private vars
@@ -118,7 +117,7 @@ local function getPercentage()
 end
 
 --- Get battery power
--- @return (string) the battery power
+-- @return (string) the battery power, in Watt
 local function getWatt()
 	local path  = battery.path
 	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
@@ -133,61 +132,97 @@ local function getWatt()
 	return defaultInfos.watt
 end
 
+local updateTab = {
+	percentage = {
+		func = getPercentage,
+		eventname = "percentage",
+		fieldname = "perc"
+	},
+	status = {
+		func = getStatus,
+		eventname = "status",
+		fieldname = "status"
+	},
+	timeLeft = {
+		func = getTimeLeft,
+		eventname = "timeLeft",
+		fieldname = "timeLeft"
+	},
+	watt = {
+		func = getWatt,
+		eventname = "watt",
+		fieldname = "watt"
+	},
+}
+
 --- Update all battery dynamics informations
 local function updateDynamicsInfos()
 	local old = utils.table.clone(infos)
-	infos.status = infos.present and getStatus() or defaultInfos.status
-	infos.timeLeft = infos.present and getTimeLeft() or defaultInfos.time 
-	infos.perc = infos.present and getPercentage() or defaultInfos.perc
-	infos.watt = infos.present and getWatt() or defaultInfos.watt
 
-	--TODO: generic emitter
-	if old.perc and old.perc ~= infos.perc then battery:emit("percentage::changed", infos.perc) end
-	if old.timeLeft and old.timeLeft ~= infos.timeLeft then battery:emit("timeLeft::changed", infos.timeLeft) end
-	if old.status and old.status ~= infos.status then battery:emit("status::changed", infos.status) end
-	if old.watt and old.watt ~= infos.watt then battery:emit("watt::changed", infos.watt) end
+	-- get the new infos
+	for _, u in pairs(updateTab) do
+		infos[u.fieldname] = infos.present and u.func() or defaultInfos[u.fieldname]
+	end
+
+	-- emit event for changes if any
+	for k, u in pairs(updateTab) do
+		if old[u.fieldname] and old[u.fieldname] ~= infos[u.fieldname] then
+			local param = nil
+			if k == "percentage" then param = infos.perc end
+			battery:emit(u.eventname .. "::changed", infos[u.fieldname], param)
+		end
+	end
 end
 
 --- Update all battery infos
 function updateAll()
 	infos.present = isPresent()
-	--updateHardwareInfos() --TODO
 	updateDynamicsInfos()
 end
 
 --- Public function to update battery infos
--- @param flag specify what to update ("all" | "dynamic" | "hardware")
+-- @param 'what' (string) or (table of strings) specifies what to update,
+--        can be :
+--          - "all"
+--          - "percentage"
+--          - "timeLeft"
+--          - "status"
+--          - "watt"
 -- @return (table) the battery infos
-function battery.update(flag)
-	if flag == "all" then
+function battery.update(what)
+	if what == "all" then
 		updateAll()
-		--elseif flag == "hardware" then
-		--updateHardwareInfos()
-	elseif flag == "dynamic" or not flag then
-		updateDynamicsInfos()
+	elseif type(what) == "string" and updateTab[what] then
+		updateTab[what].func()
+	elseif type(what) == "table" then
+		for _, v in ipairs(what) do
+			if updateTab[v] then
+				updateTab[v].func()
+			end
+		end
 	end
 	return infos
 end
 
 --- Initialize battery module
 function battery.init(options)
-	if options then
-		if options.name then
-			battery.name = options.name
-		end
-		if options.path then
-			battery.path = options.path
-		end
-	end
-	local update = options and options.update or 30
+	options = options or {}
+	battery.name = options.name or "BAT0"
+	battery.path = options.path or "/sys/class/power_supply/" .. battery.name
+
+	local updateTime = options.update or 30
 
 	updateAll()
-	-- init update timer
 	utils.setInterval(function ()
+		-- TODO: update only percentage ?
 		updateDynamicsInfos()
-	end, update)
+	end, updateTime)
 end
 
 battery.infos = infos
 
-return battery
+return setmetatable(battery, {
+	__call = function(_, ...)
+		return battery.init(...)
+	end
+})
