@@ -45,9 +45,9 @@ Load only specified module(s) :
 
 ```lua
 	bew.loadModule({
-		bew.module.UTILS,		-- or just "utils"
+		bew.module.UTILS,			-- or just "utils"
 		bew.module.KEYMAP,		-- or just "keymap"
-		bew.module.TAG,			-- or just "tag"
+		bew.module.TAG,				-- or just "tag"
 		bew.module.WORKSPACE	-- or just "workspace" ? (other name...)
 	})
 ```

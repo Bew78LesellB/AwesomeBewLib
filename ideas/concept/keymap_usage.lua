@@ -59,20 +59,29 @@ first:add({
 	ctrl = { mod = "M", key = "c" },
 	comment = "Client operations",
 	hashtags = "#client #settings",
-	cmd = settings.client.toggle
+	press = settings.client.toggle
 })
 
 first:add({
 	ctrl = { mod = "M", key = "w" },
 	comment = "Workspace/Tag managment",
 	hashtags = "#workspace #ws #settings",
-	cmd = manage.workspace
+	press = manage.workspace
+})
+
+first:add({
+	ctrl = { button = "Right" },
+	comment = "open context menu",
+	hashtags = "#mouse #menu",
+	press = function()
+		menu.toggle("context")
+	end
 })
 
 first:setExit({
 	ctrl = { key = "Escape" },
 	comment = "Exit this keymap",
-	cmd = function (keymap)
+	press = function (keymap)
 		utils.toast("Exiting from keymap : " .. keymap.name)
 	end
 })
