@@ -66,6 +66,9 @@ function utils.readFile(path, nbLine)
 	return tab
 end
 
+utils.dump = require("gears.debug").dump_return
+
+
 utils.async = require("bewlib.utils.async")
 utils.table = require("bewlib.utils.table")
 utils.toast = require("bewlib.utils.toast")

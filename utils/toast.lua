@@ -3,6 +3,7 @@
 -- Module dependencies
 local naughty = require("naughty")
 local dump = require("gears.debug").dump_return
+local merge = require("bewlib.utils.table").merge
 
 -- Module environement
 local toast = {}
@@ -19,9 +20,35 @@ local function dotoast(text, options)
 end
 
 function toast.debug(obj, options)
-	options = options or {}
-	options.timeout = options.timeout or 5
+	local default = {
+		timeout = 30,
+		bg = "#0277BD",
+		fg = "#FFFFFF",
+	}
+	options = merge(options or {}, default)
 	dotoast(dump(obj), options)
+end
+
+function toast.error(text, options)
+	local default = {
+		timeout = 0,
+		border_width = 0,
+		bg = "#F44336",
+		fg = "#FFEBEE",
+	}
+	options = merge(options or {}, default)
+	dotoast(text, options)
+end
+
+function toast.warning(text, options)
+	local default = {
+		timeout = 20,
+		border_width = 0,
+		bg = "#FFEA00",
+		fg = "#424242",
+	}
+	options = merge(options or {}, default)
+	dotoast(text, options)
 end
 
 return setmetatable(toast, {

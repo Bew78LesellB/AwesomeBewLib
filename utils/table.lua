@@ -19,20 +19,16 @@ function table.clone(tbl, deep)
     return c
 end
 
-
-
-
-
-local toast = require("bewlib.utils.toast")
-local debug = require("gears.debug").dump_return
-
 --- Merge a table into another
 -- @param tbl (table) the base table
 -- @param toMerge (table) contain the fields to set/add in tbl
--- @param new (boolean) Return a clone of base table ? (default: false)
 -- @param deep (boolean) Go recursive through tables ? (default: false)
+-- @param new (boolean) Return a clone of base table ? (default: false)
 -- @return (table) a merge of tbl and toMerge tables
-function table.merge(tbl, toMerge, new, deep)
+function table.merge(tbl, toMerge, deep, new)
+	if type(tbl) ~= "table" or type(toMerge) ~= "table" then
+		return nil
+	end
 	if new then
 		tbl = table.clone(tbl, true)
 	end
