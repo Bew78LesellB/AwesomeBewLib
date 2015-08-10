@@ -12,7 +12,7 @@ local Keymap = {
 }
 Keymap = Eventemitter(Keymap)
 
-local kmMethods = Eventemitter({})
+local prototype = Eventemitter({})
 
 local defaultModifiers = {
 	M = "Mod4",
@@ -23,14 +23,14 @@ local defaultModifiers = {
 
 --[[ Usage
 mykeymap:add({
-ctrl = { mod = "MS", key = "c" },
-press = function(bind, c)
-c:kill()
-end,
+	ctrl = { mod = "MS", key = "c" },
+	press = function(bind, c)
+		c:kill()
+	end,
 })
 ]]--
-function kmMethods:add(bind)
-	if not bind or not type(bind) == "table" then
+function prototype:add(bind)
+	if not bind or not type(bind) == "table" or not type(bind.ctrl) == "table" then
 		return
 	end
 
@@ -38,10 +38,6 @@ function kmMethods:add(bind)
 	table.insert(self._keys, {
 		bind = bind,
 		--TODO: awful.button for buttons
-		--
-		--TODO: overload press & release functions
-		--   => access to 'bind' as self  ;)
-		--   ======> aucune utilité ? <=======
 		key = awful.key(modifier, bind.ctrl.key, bind.press, bind.release)
 	})
 
@@ -50,9 +46,9 @@ end
 
 
 
-function kmMethods:get() end
+function prototype:get() end
 
-function kmMethods:apply(opt) --TODO: refactor
+function prototype:apply(opt) --TODO: refactor
 	if not opt then opt = {} end
 
 	local mode = opt.mode or "normal"
@@ -65,7 +61,7 @@ function kmMethods:apply(opt) --TODO: refactor
 			local tab
 			if filter == "key" and info.key then
 				tab = info.key
-			elseif filter == "button" and info.button then --TODO: indent pas OK
+			elseif filter == "button" and info.button then
 				tab = info.button
 			end
 			for k, v in ipairs(tab) do
@@ -140,9 +136,9 @@ end
 
 -- call:
 --
--- Keymap("name")		=> new
--- Keymap.new("name")	=> new
--- mykeymap:clone("new name")	=> clone
+-- Keymap("name")		=> new (done)
+-- Keymap.new("name")	=> new (done)
+-- mykeymap:clone("new name")	=> clone (TODO)
 
 -- local first = Keymap.new("Tag Control", { parent = Keymap.safe.tag })
 function Keymap.new(name, options)
@@ -158,7 +154,7 @@ function Keymap.new(name, options)
 		_keys = {},
 	}
 
-	km = utils.table.merge(km, kmMethods)
+	km = utils.table.merge(km, prototype)
 	Keymap._keymaps[name] = km
 	return km
 end
