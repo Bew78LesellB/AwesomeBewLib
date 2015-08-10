@@ -10,8 +10,10 @@ local utils = require("bewlib.utils")
 local eventemitter = require("bewlib.eventemitter")
 
 -- Module environement
+-- Values will be initiated in Battery.init()
 local battery = {
-	name = "BAT0",
+	name = nil,
+	path = nil,
 }
 battery = eventemitter(battery)
 
@@ -25,7 +27,7 @@ local defaultInfos = {
 	status = "Not present",
 	perc = "N/A",
 	timeLeft = "N/A",
-	watt = "N/A"
+	watt = "N/A",
 }
 local infos = {}
 
@@ -164,14 +166,18 @@ local function updateDynamicsInfos()
 		infos[u.fieldname] = infos.present and u.func() or defaultInfos[u.fieldname]
 	end
 
+	local file = io.open("/home/lesell_b/awesome.debug", "a")
+
 	-- emit event for changes if any
-	for k, u in pairs(updateTab) do
+	for key, u in pairs(updateTab) do
 		if old[u.fieldname] and old[u.fieldname] ~= infos[u.fieldname] then
 			local param = nil
-			if k == "percentage" then param = infos.perc end
+			if key == "percentage" then param = infos.perc end
+			file:write("[" .. os.date() .. "] update: " .. key .. "\n")
 			battery:emit(u.eventname .. "::changed", infos[u.fieldname], param)
 		end
 	end
+	file:close()
 end
 
 --- Update all battery infos
@@ -190,9 +196,11 @@ end
 --          - "watt"
 -- @return (table) the battery infos
 function battery.update(what)
+	local oldvalue = nil
 	if what == "all" then
 		updateAll()
 	elseif type(what) == "string" and updateTab[what] then
+		oldvalue = infos[what]
 		updateTab[what].func()
 	elseif type(what) == "table" then
 		for _, v in ipairs(what) do
