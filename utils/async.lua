@@ -30,7 +30,7 @@ function async.getLine(cmd, lineNo, callback)
 	end)
 end
 
-function async.get_first_line(cmd, callback)
+function async.getFirstLine(cmd, callback)
 	lain_async.request(cmd, function(file_out)
 		local line = file_out:read("*line")
 		file_out:close()
@@ -38,7 +38,7 @@ function async.get_first_line(cmd, callback)
 	end)
 end
 
-function async.just_exec(cmd, callback)
+function async.justExec(cmd, callback)
 	lain_async.request(cmd, function(file_out)
 		file_out:close()
 		callback()
