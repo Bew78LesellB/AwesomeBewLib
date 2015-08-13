@@ -46,7 +46,7 @@ local defaultModifiers = {
 local function parseModifiers(modifiers, bindMod)
 	local mod = {}
 	if not modifiers or not bindMod then
-		return nil
+		return {}
 	end
 
 	for i = 1, #bindMod do
