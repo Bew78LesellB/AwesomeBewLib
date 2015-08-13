@@ -21,64 +21,6 @@ local defaultModifiers = {
 	A = "Mod1",
 }
 
---[[ Usage
-mykeymap:add({
-	ctrl = { mod = "MS", key = "c" },
-	press = function(bind, c)
-		c:kill()
-	end,
-})
-]]--
-function prototype:add(bind)
-	if not bind or not type(bind) == "table" or not type(bind.ctrl) == "table" then
-		return
-	end
-
-	local modifier = Keymap.parseModifiers(self._modifiers, bind.ctrl.mod) or {}
-	table.insert(self._keys, {
-		bind = bind,
-		--TODO: awful.button for buttons
-		key = awful.key(modifier, bind.ctrl.key, bind.press, bind.release)
-	})
-
-	return self
-end
-
-
-
-function prototype:get() end
-
-function prototype:apply(opt) --TODO: refactor
-	if not opt then opt = {} end
-
-	local mode = opt.mode or "normal"
-	local filter = opt.filter or "key"
-
-	if mode == "normal" then
-		local ret = {}
-
-		for _, info in ipairs(self._keys) do
-			local tab
-			if filter == "key" and info.key then
-				tab = info.key
-			elseif filter == "button" and info.button then
-				tab = info.button
-			end
-			for k, v in ipairs(tab) do
-				table.insert(ret, v)
-			end
-		end
-		return ret
-	end
-end
-
-
-
-
-
-
-
-
 
 
 
@@ -101,7 +43,7 @@ end
 --     "Mod4",
 --     "Shift",
 -- }
-function Keymap.parseModifiers(modifiers, bindMod)
+local function parseModifiers(modifiers, bindMod)
 	local mod = {}
 	if not modifiers or not bindMod then
 		return nil
@@ -115,6 +57,69 @@ function Keymap.parseModifiers(modifiers, bindMod)
 	end
 	return mod
 end
+
+
+
+
+
+
+
+--[[ Usage
+mykeymap:add({
+	ctrl = { mod = "MS", key = "c" },
+	press = function(bind, c)
+		c:kill()
+	end,
+})
+]]--
+function prototype:add(bind)
+	if not bind or not type(bind) == "table" or not type(bind.ctrl) == "table" then
+		return
+	end
+
+	local modifier = parseModifiers(self._modifiers, bind.ctrl.mod) or {}
+	table.insert(self._keys, {
+		bind = bind,
+		--TODO: awful.button for buttons
+		key = awful.key(modifier, bind.ctrl.key, bind.press, bind.release)
+	})
+
+	return self
+end
+
+
+
+function prototype:get() end --TODO: c'est quoi cette fonction ?
+
+function prototype:apply(opt) --TODO: refactor
+	if not opt then opt = {} end
+
+	local mode = opt.mode or "normal"
+	local filter = opt.filter or "key"
+
+	if mode == "normal" then
+		local ret = {}
+
+		for _, info in ipairs(self._keys) do
+			local tab
+			if filter == "key" and info.key then
+				tab = info.key
+			elseif filter == "button" and info.button then
+				tab = info.button
+			end
+			if tab then
+				for k, v in ipairs(tab) do
+					table.insert(ret, v)
+				end
+			end
+		end
+		return ret
+	end
+end
+
+
+
+
 
 
 
