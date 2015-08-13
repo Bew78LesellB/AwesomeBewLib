@@ -99,17 +99,21 @@ function Command.register(name, callback, condition)
 	return registerAction(name.action, name.grp, callback, condition)
 end
 
-function Command.run(name, force)
-	force = force or false
+function Command.run(name, options)
+	local default = {
+		force = false,
+		args = {},
+	}
+	options = utils.table.merge(options or {}, default, true)
 	local cmd = findCommandByName(name)
 
 	if not cmd then return nil end
-	if not force and type(cmd.condition) == "function" then
+	if not options.force and type(cmd.condition) == "function" then
 		if not cmd.condition() then
 			return nil
 		end
 	end
-	return cmd.callback()
+	return cmd.callback(options.args)
 end
 
 function Command.test()
