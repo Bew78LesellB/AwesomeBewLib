@@ -9,7 +9,7 @@ local lain_async = require("lain.asyncshell")
 -- Module environement
 local async = {}
 
-function async.get_all(cmd, callback)
+function async.getAll(cmd, callback)
 	lain_async.request(cmd, function(file_out)
 		local stdout = file_out:read("*all")
 		file_out:close()
@@ -17,7 +17,7 @@ function async.get_all(cmd, callback)
 	end)
 end
 
-function async.get_line(cmd, lineNo, callback)
+function async.getLine(cmd, lineNo, callback)
 	lain_async.request(cmd, function(file_out)
 		local i = 1
 		local line = nil
