@@ -32,8 +32,18 @@ type de tag ? System de flags pour qu'un tag ai les caracteristique de plusieurs
 - config-tag
 
 
-### Overlay Tag - Panel (a new concept ?)
+### Overlay Tag - Panel (a new concept ?) : Useless: use a DialogBox ?
 
 A tag (or a set of things) that is displayed on top of everythings, example:
 * A config panel
 * A settings panel
+
+
+
+## Tag info
+
+In a big dialog box, show every possible infos about the current tag.
+
+- Clients in the tag
+- Keymaps stack of the current tag
+-
