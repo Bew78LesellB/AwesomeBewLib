@@ -26,6 +26,9 @@ end
 -- @param new (boolean) Return a clone of base table ? (default: false)
 -- @return (table) a merge of tbl and toMerge tables
 function table.merge(tbl, toMerge, deep, new)
+	if not tbl then
+		tbl = {}
+	end
 	if type(tbl) ~= "table" or type(toMerge) ~= "table" then
 		return nil
 	end
