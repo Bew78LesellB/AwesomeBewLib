@@ -3,7 +3,6 @@ local utils = require("bewlib.utils")
 
 -- Module environement
 local Command = {
-	mt = {},
 	_commandGroups = {},
 }
 --Command = Eventemitter(Command)
@@ -13,6 +12,12 @@ local Command = {
 
 --local grpPrototype = Eventemitter({})
 local grpPrototype = {}
+
+-- TODO: cmdPrototype functions
+--local cmdPrototype = {}
+
+
+-- LOCAL FUNCTIONS
 
 local function splitCommandName(name)
 	local wordPattern = "[%w_%-]*"
@@ -58,63 +63,127 @@ local function registerGroup(grpName)
 	return Command._commandGroups[grpName]
 end
 
-local function registerAction(actionName, grpName, callback, condition)
+local function registerAction(actionName, grpName, options)
 	local cmd = {
 		_name = actionName,
-		callback = callback,
-		condition = condition,
+		callback = options.callback,
+		condition = options.condition,
+		argsFilter = options.argsFilter,
 	}
 	Command._commandGroups[grpName]._actions[actionName] = cmd
 	return cmd
 end
 
-
-
-
-
-
-
-function grpPrototype:register(name, callback, condition)
-	if not name or type(callback) ~= "function" then
-		return nil
-	end
-	name = {
-		action = name,
-		grp = self._name,
-	}
-	return registerAction(name.action, name.grp, callback, condition)
-end
-
-function Command.register(name, callback, condition)
-	name = splitCommandName(name)
-	local grp
-
-	if not name then return nil end
-	if name.grp then
-		grp = registerGroup(name.grp)
-	end
-	if not name.action or type(callback) ~= "function" then
-		return grp
-	end
-	return registerAction(name.action, name.grp, callback, condition)
-end
-
-function Command.run(name, options)
-	local default = {
-		force = false,
-		args = {},
-	}
-	options = utils.table.merge(options or {}, default, true)
-	local cmd = findCommandByName(name)
+local function runCommand(cmd, givenArgs, force)
+	local finalArgs = {}
 
 	if not cmd then return nil end
-	if not options.force and type(cmd.condition) == "function" then
+
+	if not force and type(cmd.condition) == "function" then
 		if not cmd.condition() then
 			return nil
 		end
 	end
-	return cmd.callback(options.args)
+	if givenArgs and cmd.argsFilter then
+		for _, autorizedKey in ipairs(cmd.argsFilter) do
+			if givenArgs[autorizedKey] then
+				finalArgs[autorizedKey] = givenArgs[autorizedKey]
+			end
+		end
+	end
+	return cmd.callback(finalArgs)
 end
+
+local function checkRegisterOptionsOK(options)
+	if not options or type(options) ~= "table" then
+		return false
+	end
+	if not options.callback or not type(options.callback) == "function" then
+		return false
+	end
+	if options.condition and not type(options.condition) == "function" then
+		return false
+	end
+	if options.argsFilter then
+		if not type(options.argsFilter) == "table" then
+			return false
+		end
+		do -- check that argsFilter have only ipairs values
+			local i = 0
+			for _, _ in ipairs(options.argsFilter) do
+				i = i + 1
+			end
+			if not #options.argsFilter == i then
+				return false
+			end
+		end
+	end
+	return true
+end
+
+
+
+
+-- PUBLIC FUNCTIONS
+
+function grpPrototype:register(name, options)
+	if not name then
+		return nil
+	end
+	if type(options) == "function" then
+		options = {
+			callback = options,
+		}
+	elseif not checkRegisterOptionsOK(options) then
+		return nil
+	end
+
+	return registerAction(name, self._name, options)
+end
+
+function Command.register(name, options)
+	name = splitCommandName(name)
+	local grp
+
+	if not name then return nil end
+	if type(options) == "function" then
+		options = {
+			callback = options,
+		}
+	elseif not checkRegisterOptionsOK(options) then
+		return nil
+	end
+
+	if name.grp then
+		grp = registerGroup(name.grp)
+	end
+	if not name.action then
+		return grp
+	end
+	return registerAction(name.action, name.grp, options)
+end
+
+function Command.run(name, args)
+	local cmd = findCommandByName(name)
+
+	return runCommand(cmd, args, false)
+end
+
+function Command.forceRun(name, args)
+	local cmd = findCommandByName(name)
+
+	return runCommand(cmd, args, true)
+end
+
+function Command.getFunction(name)
+	local cmd = findCommandByName(name)
+
+	if not cmd then return nil end
+	return cmd.callback
+end
+
+
+-- TEST
 
 function Command.test()
 	Command.register("myStandaloneAction", function()
@@ -131,13 +200,15 @@ function Command.test()
 		utils.toast("from superGroup.Action4")
 	end, function() return false end)
 	Command.register("mynewgroup.")
-	--utils.toast.debug(Command._commandGroups, {timeout = 30})
+	utils.toast.debug(Command._commandGroups, {timeout = 30})
 	Command.run("superGroup.action4")
 end
 
 
-
-
-Command = setmetatable(Command, Command.mt)
+Command = setmetatable(Command, {
+	__call = function(_, ...)
+		return Command.register(...)
+	end,
+})
 
 return Command
