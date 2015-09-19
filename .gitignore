@@ -1,0 +1,5 @@
+# ignore tags file
+tags
+
+# ignore vim-ctrlspace temporary files
+.cs_files
