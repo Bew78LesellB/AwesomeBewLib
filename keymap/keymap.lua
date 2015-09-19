@@ -68,7 +68,7 @@ end
 --[[ Usage
 mykeymap:add({
 	ctrl = { mod = "MS", key = "c" },
-	press = function(bind, c)
+	press = function(self, c)
 		c:kill()
 	end,
 })
@@ -82,15 +82,15 @@ function Keymap.prototype:add(bind)
 	table.insert(self._keys, {
 		bind = bind,
 		--TODO: awful.button for buttons
+
+		-- TODO: directly use capi.key() ?
+		-- FIXME: awful.key can return multiple keys !!
 		key = awful.key(modifier, bind.ctrl.key, function(...) bind.press(self, ...) end, function(...) bind.release(self, ...) end)
 	})
 
 	return self
 end
 
-
-
-function Keymap.prototype:get() end --TODO: c'est quoi cette fonction ?
 
 function Keymap.prototype:apply(options) --TODO: refactor
 	if not options then options = {} end
@@ -119,115 +119,20 @@ end
 
 
 
-
-
-
-
-
-
 function Keymap.apply(name, options)
-	if not name or not Keymap._keymaps[name] then
+	local keymap = Keymap.get(name)
+	if not keymap then
 		return nil
 	end
-	return Keymap._keymaps[name]:apply(options)
+	return keymap:apply(options)
 end
 
-
-
--- Keymap stack system
-
--- Example stack (high to low priority) :
--- {
---   { name = "high.priority.keymap", keymap = {} },
---   { name = "client.navigation", keymap = {} },
---   { name = "tag.navigation", keymap = {} },
---   { name = "layout.changer", keymap = {} },
---   { name = "awesome.base", keymap = {} },
--- }
-
--- Idea :
--- Keymap.stack.add(newStackID)
--- Keymap.stack.push(keymapName, options)
--- Keymap.stack.pop(keymapName, stackID)
-
-Keymap._stackList = {
-	root = {}
-}
-
-function Keymap.addStack(stackID)
-	if not stackID or Keymap._stackList[stackID] then
-		return false
+function Keymap.get(name)
+	if not name then
+		return nil
 	end
-
-	Keymap._stackList[stackID] = {}
-	return true
+	return Keymap._keymaps[name]
 end
-
-function Keymap.push(name, options)
-	if not name or not Keymap._keymaps[name] then
-		return false
-	end
-
-	local options = options or {}
-
-	local stackID = options.stack or "root"
-	local priority = options.priority or "high"
-
-	if not Keymap._stackList[stackID] then
-		utils.toast.error("In Keymap.push : cannot find stack with id " .. stackID)
-		return false
-	end
-
-	if priority == "high" then -- put the keymap on top of the global stack
-		table.insert(Keymap._stack, 1, {
-			name = name,
-			keymap = Keymap._keymaps[name],
-		})
-	elseif priority == "low" then -- put the Keymap on bottom of the global stack
-		table.insert(Keymap._stack, {
-			name = name,
-			keymap = Keymap._keymaps[name],
-		})
-	else
-		return false
-	end
-	return true
-end
-
-function Keymap.pop(name)
-	if not name or not Keymap._keymaps[name] then
-		return false
-	end
-
-	for k, v in Keymap._stack do
-		if type(v) == "table" and v.name == name then
-			table.remove(Keymap._stack, k)
-			return true
-		end
-	end
-	return false
-end
-
-
--- Keymap keygrabber mode
-
--- Keymap.grabber.push(keymapName, options)
--- Keymap.grabber.pop(grabber)
--- Keymap.grabber.popAll()
-
-function Keymap.set(name, options)
-end
-
-function Keymap.unset(name)
-end
-
-
-
-
-
-
-
-
 
 
 -- call:
@@ -244,19 +149,21 @@ function Keymap.new(name, options)
 	end
 
 	-- create the new keymap
-	local km = {
+	local newKeymap = {
 		name = name,
 		_modifiers = modifiers,
 		_keys = {},
 	}
 
-	km = utils.table.merge(km, Keymap.prototype)
-	Keymap._keymaps[name] = km
-	return km
+	newKeymap = utils.table.merge(newKeymap, Keymap.prototype)
+	Keymap._keymaps[name] = newKeymap
+	return newKeymap
 end
 
+-- disable this ? (ambiguous...)
 function Keymap.mt:__call(...)
 	Keymap.new(...)
+	--change to Keymap.get(...) ?
 end
 
 Keymap = setmetatable(Keymap, Keymap.mt)
