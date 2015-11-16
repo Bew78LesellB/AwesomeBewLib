@@ -21,14 +21,15 @@ Config.add("clipboard.share", "unset")
 Config.add("clipboard.share", Config.UNSET)
 
 
-Config.add("terminal.beginPath", Config.UNSET)
+Config.add("terminal.startPath", Config.UNSET) -- or Env.HOME
+
 
 
 -- get config
 
-Config.get("terminal.beginPath")
+Config.get("terminal.startPath")
 
-Config.getDefault("terminal.beginPath")
+Config.getDefault("terminal.startPath")
 
 
 
@@ -38,28 +39,28 @@ Config.getDefault("terminal.beginPath")
 
 -- set config
 
-Config.set("terminal.beginPath", currentPath, "tag")
+Config.set("terminal.startPath", currentPath, "tag")
 -- or
-Tag:setConfig("terminal.beginPath", currentPath, "myTagName")
+Tag:setConfig("terminal.startPath", currentPath, "myTagName")
 -- or
-myCurrentTag:setConfig("terminal.beginPath", currentPath)
+myCurrentTag:setConfig("terminal.startPath", currentPath)
 
 
 -- reset config to default
 
-Config.reset("terminal.beginPath")
+Config.reset("terminal.startPath")
 
 
 -- React on config changed
 
--- Maybe not......
-Config.on("change", "terminal.beginPath", function()
+-- Maybe not...... (or maybe yes :p)
+Config.on("change", "terminal.startPath", function()
 end)
 
-Config.on("reset", "terminal.beginPath", function()
+Config.on("reset", "terminal.startPath", function()
 end)
 
-Config.on("use", "terminal.beginPath", function()
+Config.on("use", "terminal.startPath", function()
 end)
 
 

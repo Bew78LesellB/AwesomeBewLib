@@ -13,9 +13,8 @@ A lot of configuration levels :
 
 ## Getting a config key-value
 
-If I search for a config value in a tag
+If I search for a config value in a tag (with a client focused)
 
-Look in `custom config` then
 Look in `Client config` then
 Look in `Tag config` then
 Look in `Workspace config` then
