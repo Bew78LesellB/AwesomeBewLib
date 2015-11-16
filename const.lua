@@ -1,21 +1,36 @@
---TODO: make impossible to reset a constant
 local Const = {}
+
+local constList = {}
 
 local constID = 0
 
-local function addConst()
-	constID = constID + 1
-	return constID
+function Const.add(constantName)
+	if not constList[constantName] then
+		constID = constID + 1
+		constList[constantName] = constID
+		return constID
+	end
+	return nil
 end
 
-Const.LEFT = addConst()
-Const.RIGHT = addConst()
+Const.add("LEFT")
+Const.add("RIGHT")
 
-Const.PREVIOUS = addConst()
-Const.NEXT = addConst()
-Const.LAST = addConst()
+Const.add("PREVIOUS")
+Const.add("NEXT")
+Const.add("LAST")
 
-Const.UP = addConst()
-Const.DOWN = addConst()
+Const.add("UP")
+Const.add("DOWN")
 
-return Const
+Const.mt = {
+	__index = function(self, key)
+		return constList[key]
+	end,
+
+	__newindex = function(self, key, value)
+		-- do nothing
+	end,
+}
+
+return setmetatable(Const, Const.mt)

@@ -19,11 +19,19 @@ local grpPrototype = {}
 
 -- LOCAL FUNCTIONS
 
+-- TODO: refactor all this
 local function splitCommandName(name)
-	local wordPattern = "[%w_%-]*"
-	local grp, action
-	grp, action = string.match(name, "^[%s]*(" .. wordPattern .. ")%.(" .. wordPattern .. ")[%s]*$")
-	local word = string.match(name, "^(" .. wordPattern .. ")$")
+	local groupPattern = "[%w_%-]*"
+	local actionPattern = "[%w_%-.]*"
+
+	-- match :
+	-- "group.action"
+	-- "group.subgroup.action"  (in fact, action is now "subgroup.action")
+	local grp, action = string.match(name, "^[%s]*(" .. groupPattern .. ")%.(" .. actionPattern .. ")[%s]*$")
+
+	-- match :
+	-- "action"
+	local word = string.match(name, "^(" .. actionPattern .. ")$")
 
 	local name = {
 		grp = grp ~= "" and grp or "nogroup",
@@ -36,7 +44,7 @@ local function splitCommandName(name)
 end
 
 local function findCommandByName(name)
-	name = splitCommandName(name)
+	local name = splitCommandName(name)
 
 	if not name then return nil end
 	if not name.action or not Command._commandGroups[name.grp] then

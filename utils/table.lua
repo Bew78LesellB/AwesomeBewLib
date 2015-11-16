@@ -49,4 +49,14 @@ function table.merge(tbl, toMerge, deep, new)
 	return tbl
 end
 
+function table.hasIPairs(tbl)
+	if not tbl or not type(tbl) == "table" then
+		return false
+	end
+	for _ in ipairs(tbl) do
+		return true
+	end
+	return false
+end
+
 return table
