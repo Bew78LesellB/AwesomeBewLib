@@ -1,5 +1,10 @@
 --[[ bewlib.utils.toast ]]--
 
+-- Grab environement
+local std = {
+	debug = debug,
+}
+
 -- Module dependencies
 local naughty = require("naughty")
 local dump = require("gears.debug").dump_return
@@ -37,6 +42,7 @@ function toast.error(text, options)
 		fg = "#FFEBEE",
 	}
 	options = merge(options or {}, default)
+	text = tostring(text) .. "\n\n" .. std.debug.traceback()
 	dotoast(text, options)
 end
 
