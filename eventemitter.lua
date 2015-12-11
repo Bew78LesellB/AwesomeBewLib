@@ -9,6 +9,13 @@ local function on(self, event, func)
 	self._events[event][func] = func
 end
 
+local function off(self, event, func)
+	if not self._events[event] then
+		return
+	end
+	self._events[event][func] = nil
+end
+
 local function emit(self, event, ...)
 	if not self._events[event] then
 		return
@@ -18,23 +25,27 @@ local function emit(self, event, ...)
     end
 end
 
-function Eventemitter:new(obj)
+function Eventemitter.new(obj)
 	local newobj = obj or {}
 	newobj._events = {}
 
-	function newobj:on(event, func)
-		on(self, event, func)
+	function newobj:on(...)
+		on(newobj, ...)
 	end
 
-	function newobj:emit(event, ...)
-		emit(self, event, ...)
+	function newobj:off(...)
+		off(newobj, ...)
+	end
+
+	function newobj:emit(...)
+		emit(newobj, ...)
 	end
 
 	return newobj
 end
 
 function Eventemitter.mt:__call(...)
-	return Eventemitter:new(...)
+	return Eventemitter.new(...)
 end
 
 return setmetatable(Eventemitter, Eventemitter.mt)
