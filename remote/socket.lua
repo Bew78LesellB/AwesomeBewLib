@@ -1,3 +1,5 @@
+--TODO: copy the default _ENV
+
 local capi = {
 	timer = timer,
 }
@@ -58,6 +60,7 @@ local function dispatchPacket(packet, client)
 
 		local f, err = load(packet.data)
 		if f then
+			--TODO: protect the call with the default _ENV
 			local ret = { pcall(f) }
 
 			if not ret[1] then
@@ -209,6 +212,7 @@ local function setServerPort(port)
 	end
 
 	local file = io.open(getPortPath(port), "w")
+	-- TODO: put/get more infos to/from /tmp/awesome-remote-bewlib/* files
 	file:write(tostring(port))
 	file:close()
 
