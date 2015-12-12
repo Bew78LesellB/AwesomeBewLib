@@ -4,9 +4,6 @@ local capi = {
 
 local Eventemitter = require("bewlib.eventemitter")
 
--- TODO: debug
-local debug = require("bewlib.utils").toast.debug
-
 -- TODO: make this require safe
 -- if the 'socket' module isn't not available,
 -- this will throw an exception...
@@ -35,13 +32,7 @@ local checker = {
 -- .       key2 = "value2",
 -- .   }
 -- }
---
--- the args table will be unpack then send :
--- eventHandler(event.name, unpack(event.args))
 local function dispatchEvent(event)
-	debug("dispatchEvent")
-	debug(event)
-	debug("emitting event " .. event.name)
 	Eventemitter.emit(event.name, event.args)
 end
 
@@ -50,12 +41,9 @@ end
 -- packet = {
 -- .   format = "awesome",
 -- .   type = "event" or "eval",
--- .   data = {
---         -- Put the data you want here
--- .   }
+-- .   data = ...     -- Put the data you want here
 -- }
 local function dispatchPacket(packet, client)
-	debug("dispatchPacket")
 	if not type(packet) == "table" then return end
 
 	if not packet.format or packet.format ~= "awesome" then
@@ -70,11 +58,16 @@ local function dispatchPacket(packet, client)
 
 		local f, err = load(packet.data)
 		if f then
-			local ret, err = pcall(f)
-			if err then return { error = e } end
-			return { ret }
-		elseif e then
-			return { error = e }
+			local ret = { pcall(f) }
+
+			if not ret[1] then
+				return { error = ret[2] }
+			end
+			table.remove(ret, 1) -- remove status
+
+			return ret
+		elseif err then
+			return { error = err }
 		end
 
 	end
@@ -153,13 +146,16 @@ local function checkSocketCallback()
 		while canReadClient(client) do
 
 			client:settimeout(0)
-			local packet, status = client:receive("*l") -- receive a line
+			local packetLength, status = client:receive("*l") -- receive the length
+			local packet, status = client:receive(packetLength) -- receive the packet
 			if packet then
 
 				local ret = dispatchPacket(MsgPack.unpack(packet), client)
 				if ret then
-					client:settimeout(0.5) -- We give only 0.5 sec to send the msg
-					local _, status = client:send(MsgPack.pack(ret))
+					--client:settimeout(0.5) -- We give only 0.5 sec to send the msg
+					local packet = MsgPack.pack(ret)
+					local _, status = client:send(string.len(packet) .. "\n")
+					local _, status = client:send(packet)
 					if status == "closed" then
 						removeClient(client)
 						break

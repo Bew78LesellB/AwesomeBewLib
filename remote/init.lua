@@ -1,14 +1,7 @@
 local Remote = {}
 
-local debug = require("bewlib.utils").toast.debug
-
-debug("in require Remote")
-
 function Remote.init(...)
 	local modes = {...}
-
-	debug("init with modes")
-	debug(modes)
 
 	for _, mode in ipairs(modes) do
 		if mode == "socket" then
