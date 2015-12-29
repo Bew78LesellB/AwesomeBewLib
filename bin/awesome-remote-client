@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
-local Socket = require"socket"
-local MsgPack = require"MessagePack"
+local Socket = require("socket")
+local MsgPack = require("MessagePack")
 
 if #arg == 0 then
 	print()
@@ -28,13 +28,13 @@ if status == "connection refused" then
 end
 
 ------------------------------------------
---TODO TODO TODO TODO TODO TODO TODO TODO
+-- TODO TODO TODO TODO TODO TODO TODO TODO
 ------------------------------------------
 -- finish awesome-remote-client to use in shell like :
 --
 -- echo "return tostring(awesome)" | awesome-remote-client --eval
 --
--- awesome-remote-client --event <<EOF
+-- awesome-remote-client --event "my::event" <<EOF
 --     {
 --         arg1 = "value1",
 --         arg2 = "value2",
@@ -44,14 +44,13 @@ end
 --
 -- TODO: validation rules when passing args for --event (and --eval ?)
 --
--- TODO replace '\n' by "\n" (in strings only), when --eval (need when --event ?)
+-- TODO replace char '\n' by "\n" (in strings only), when --eval (need when --event ?)
 --
 -- TODO: how to choose a awesome instance when there is two ? (for an eval)
 -- TODO: put/get more infos to/from /tmp/awesome-remote-bewlib/* files
 
 ------------------------------------------
 
---[[
 local data = {
 	format = "awesome",
 	type = "event",
@@ -64,13 +63,14 @@ local data = {
 		}
 	}
 }
---]]
 
+--[[
 local data = {
 	format = "awesome",
 	type = "eval",
 	data = "return tostring(awesome) .. '\nbla'",
 }
+--]]
 
 ------------------------------------------
 

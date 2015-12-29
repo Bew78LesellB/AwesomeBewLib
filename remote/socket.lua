@@ -16,14 +16,29 @@ local RemoteSocket = Eventemitter{}
 
 local serverSock = nil
 local serverPort = nil
-local serverClients = {}
+local connectedClients = {}
 
-local remotePortDir = "/tmp/awesome-remote-bewlib"
+local remotePortDir = "/tmp/awesome-remote"
 
 local checker = {
 	interval = 0.5,
 	timer = nil,
 }
+
+local ClientState = {
+	-- length
+	WAITING_LENGTH = 0,
+	RECEIVING_LENGTH = 1,
+
+	-- packet
+	WAITING_PACKET = 2,
+	RECEIVING_PACKET = 3,
+
+	CLOSED = 42,
+}
+
+
+
 
 -- Event format :
 --
@@ -56,24 +71,9 @@ local function dispatchPacket(packet, client)
 
 		dispatchEvent(packet.data)
 
-	elseif packet.type == "eval" then
-
-		local f, err = load(packet.data)
-		if f then
-			--TODO: protect the call with the default _ENV
-			local ret = { pcall(f) }
-
-			if not ret[1] then
-				return { error = ret[2] }
-			end
-			table.remove(ret, 1) -- remove status
-
-			return ret
-		elseif err then
-			return { error = err }
-		end
-
 	end
+	-- We do not handle other packet type currently
+	-- (And don't want to handle 'eval' security breaches)
 end
 
 ------------------------------------------
@@ -102,12 +102,15 @@ end
 --
 ------------------------------------------
 local function addClient(client)
-	if not client or serverClients[client] then
+	if not client or connectedClients[client] then
 		return
 	end
 
-	table.insert(serverClients, client)
-	serverClients[client] = #serverClients
+	table.insert(connectedClients, client)
+	connectedClients[client] = {
+		position = #connectedClients,
+		state = ClientState.WAITING_LENGTH,
+	}
 end
 
 ------------------------------------------
@@ -116,10 +119,69 @@ end
 local function removeClient(client)
 	client:close()
 
-	local i = serverClients[client]
-	if i then
-		table.remove(serverClients, i)
-		serverClients[client] = nil
+	local clientInfo = connectedClients[client]
+	if clientInfo then
+		table.remove(connectedClients, clientInfo.position)
+		connectedClients[client] = nil
+	end
+end
+
+------------------------------------------
+--
+------------------------------------------
+local function clientReceive(client, info)
+	if not client or not info then return end
+	client:settimeout(0)
+
+	if info.state == ClientState.WAITING_LENGTH or info.state == ClientState.RECEIVING_LENGTH then
+		-- Receive Length
+
+		local packet, status, partialPacket = client:receive("*l") -- receive the length
+		if status == "timeout" and partialPacket then
+
+			info.partial = (info.partial or "") .. partialPacket
+			info.state = ClientState.RECEIVING_LENGTH
+
+		elseif packet then
+
+			local length = tonumber(packet)
+			if not length then
+				-- There is an error here, how do we handle it ? ignore ?
+				info.state = ClientState.WAITING_LENGTH
+				info.partial = nil
+				return
+			end
+			info.packetLength = length
+			info.state = ClientState.WAITING_PACKET
+			info.partial = nil
+
+		else
+			info.state = ClientState.CLOSED
+		end
+
+	elseif info.state == ClientState.WAITING_PACKET or info.state == ClientState.RECEIVING_PACKET then
+		-- Receive Packet
+
+		local packet, status, partialPacket = client:receive(info.packetLength)
+
+		if status == "timeout" and partialPacket then
+
+			info.partial = (info.partial or "") .. partialPacket
+			info.state = ClientState.RECEIVING_PACKET
+
+		elseif packet then
+
+			if info.partial then
+				packet = info.partial .. packet
+				info.partial = nil
+			end
+			dispatchPacket(MsgPack.unpack(packet))
+
+			info.state = ClientState.WAITING_LENGTH
+
+		else
+			info.state = ClientState.CLOSED
+		end
 	end
 end
 
@@ -138,36 +200,19 @@ local function checkSocketCallback()
 		end
 	end
 
-	if #serverClients == 0 then
+	if #connectedClients == 0 then
 		return
 	end
 
 	-- Do we have clients who wants to talk to us ?
-	local readClients = LuaSocket.select(serverClients, nil, 0)
+	local readClients = LuaSocket.select(connectedClients, nil, 0)
 	for i, client in ipairs(readClients) do
 		-- Read as much as possible each clients input
 		while canReadClient(client) do
 
-			client:settimeout(0)
-			local packetLength, status = client:receive("*l") -- receive the length
-			local packet, status = client:receive(packetLength) -- receive the packet
-			if packet then
+			clientReceive(client, connectedClients[client])
 
-				local ret = dispatchPacket(MsgPack.unpack(packet), client)
-				if ret then
-					--client:settimeout(0.5) -- We give only 0.5 sec to send the msg
-					local packet = MsgPack.pack(ret)
-					local _, status = client:send(string.len(packet) .. "\n")
-					local _, status = client:send(packet)
-					if status == "closed" then
-						removeClient(client)
-						break
-					end
-				end
-
-			end
-
-			if status == "closed" then
+			if clientInfo.state == ClientState.CLOSED then
 				removeClient(client)
 				break
 			end
@@ -251,7 +296,7 @@ local function closeSocket()
 		serverSock:close()
 		serverSock = nil
 
-		serverClients = {} -- forget all still connected clients
+		connectedClients = {} -- forget all still connected clients
 	end
 	setServerPort(nil)
 end
