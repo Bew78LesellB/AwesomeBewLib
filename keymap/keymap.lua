@@ -119,7 +119,7 @@ end
 
 
 
-function Keymap.apply(name, options)
+function Keymap.getCApiKeys(name, options)
 	local keymap = Keymap.get(name)
 	if not keymap then
 		return nil
