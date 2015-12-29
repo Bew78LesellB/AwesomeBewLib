@@ -11,11 +11,11 @@ local eventemitter = require("bewlib.eventemitter")
 
 -- Module environement
 -- Values will be initiated in Battery.init()
-local battery = {
+local Battery = {
 	name = nil,
 	path = nil,
 }
-battery = eventemitter(battery)
+Battery = eventemitter(Battery)
 
 -- private vars
 local defaultInfos = {
@@ -52,13 +52,13 @@ end
 --- Get the battery status
 -- @return the battery status ("Charging" "Discharging" "Full")
 local function getStatus()
-	return firstline(battery.path .. "/status") or defaultInfos.status
+	return firstline(Battery.path .. "/status") or defaultInfos.status
 end
 
 --- Test if there is a battery
 -- @return (boolean) true if there is a battery, false otherwise
 local function isPresent()
-	local present = firstline(battery.path .. "/present")
+	local present = firstline(Battery.path .. "/present")
 	return present == "1" and true or false
 end
 
@@ -67,7 +67,7 @@ end
 local function getTimeLeft()
 	if not infos.present then return defaultInfos.timeLeft end
 
-	local path = battery.path
+	local path = Battery.path
 	local rem   = firstline(path .. "/energy_now") or firstline(path .. "/charge_now")
 	local tot   = firstline(path .. "/energy_full") or firstline(path .. "/charge_full")
 	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
@@ -98,7 +98,7 @@ end
 --- Get battery percentage
 -- @return (number) the battery capacity percentage
 local function getPercentage()
-	local path = battery.path
+	local path = Battery.path
 	local perc = firstline(path .. "/capacity")
 
 	if perc then
@@ -121,7 +121,7 @@ end
 --- Get battery power
 -- @return (string) the battery power, in Watt
 local function getWatt()
-	local path  = battery.path
+	local path  = Battery.path
 	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
 	local ratev = firstline(path .. "/voltage_now")
 
@@ -176,7 +176,7 @@ local function updateDynamicsInfos()
 			if file then
 				file:write("[" .. os.date() .. "] update: " .. key .. "\n")
 			end
-			battery:emit(u.eventname .. "::changed", infos[u.fieldname], param)
+			Battery:emit(u.eventname .. "::changed", infos[u.fieldname], param)
 		end
 	end
 	if file then
@@ -199,7 +199,7 @@ end
 --          - "status"
 --          - "watt"
 -- @return (table) the battery infos
-function battery.update(what)
+function Battery.update(what)
 	local oldvalue = nil
 	if what == "all" then
 		updateAll()
@@ -217,24 +217,23 @@ function battery.update(what)
 end
 
 --- Initialize battery module
-function battery.init(options)
+function Battery.init(options)
 	options = options or {}
-	battery.name = options.name or "BAT0"
-	battery.path = options.path or "/sys/class/power_supply/" .. battery.name
+	Battery.name = options.name or "BAT0"
+	Battery.path = options.path or "/sys/class/power_supply/" .. Battery.name
 
 	local updateTime = options.update or 30
 
 	updateAll()
 	utils.setInterval(function ()
-		-- TODO: update only percentage ?
 		updateDynamicsInfos()
 	end, updateTime)
 end
 
-battery.infos = infos
+Battery.infos = infos
 
-return setmetatable(battery, {
+return setmetatable(Battery, {
 	__call = function(_, ...)
-		return battery.init(...)
+		return Battery.init(...)
 	end
 })
