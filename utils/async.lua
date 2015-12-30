@@ -9,43 +9,41 @@ local lain_async = require("lain.asyncshell")
 -- Module environement
 local async = {}
 
-local function lain_async_request(base_cmd, callback)
-	local cmd = "(" .. base_cmd .. ")"
+local function lain_async_request(cmd, callback)
 	return lain_async.request(cmd, callback)
 end
 
 function async.getAll(cmd, callback)
-	lain_async_request(cmd, function(file_out)
-		local stdout = file_out:read("*all")
-		file_out:close()
-		callback(stdout)
-	end)
+	lain_async_request(cmd, callback)
 end
 
+
 function async.getLine(cmd, lineNo, callback)
-	lain_async_request(cmd, function(file_out)
+	return lain_async_request(cmd, function(stdout)
 		local i = 1
-		local line = nil
-		while i <= lineNo do
-			line = file_out:read("*line")
+		local line
+		for line in stdout:gmatch("[^\r\n]+") do
+			if i == lineNo then
+				break
+			end
 			i = i + 1
 		end
-		file_out:close()
+		if not i == lineNo then
+			return
+		end
 		callback(line)
 	end)
 end
 
 function async.getFirstLine(cmd, callback)
-	lain_async_request(cmd, function(file_out)
-		local line = file_out:read("*line")
-		file_out:close()
+	return lain_async_request(cmd, function(stdout)
+		local line = stdout:match("^[^\n]*")
 		callback(line)
 	end)
 end
 
 function async.justExec(cmd, callback)
-	lain_async_request(cmd, function(file_out)
-		file_out:close()
+	return lain_async_request(cmd, function(stdout)
 		callback()
 	end)
 end
