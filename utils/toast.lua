@@ -31,7 +31,7 @@ function toast.debug(obj, options)
 		fg = "#FFFFFF",
 	}
 	options = merge(options or {}, default)
-	dotoast(dump(obj), options)
+	return dotoast(dump(obj), options)
 end
 
 function toast.error(text, options)
@@ -43,7 +43,7 @@ function toast.error(text, options)
 	}
 	options = merge(options or {}, default)
 	text = tostring(text) .. "\n\n" .. std.debug.traceback()
-	dotoast(text, options)
+	return dotoast(text, options)
 end
 
 function toast.warning(text, options)
@@ -54,7 +54,7 @@ function toast.warning(text, options)
 		fg = "#424242",
 	}
 	options = merge(options or {}, default)
-	dotoast(text, options)
+	return dotoast(text, options)
 end
 
 return setmetatable(toast, {
