@@ -7,7 +7,7 @@
 
 -- Module dependencies
 local utils = require("bewlib.utils")
-local eventemitter = require("bewlib.eventemitter")
+local Eventemitter = require("bewlib.eventemitter")
 
 -- Module environement
 -- Values will be initiated in Battery.init()
@@ -15,7 +15,12 @@ local Battery = {
 	name = nil,
 	path = nil,
 }
-Battery = eventemitter(Battery)
+Battery = Eventemitter(Battery)
+
+Battery.DISCHARGING = "Discharging"
+Battery.CHARGING = "Charging"
+Battery.NOTPRESENT = "Not Present"
+Battery.UNKNOWN_STATUS = "Unknown"
 
 -- private vars
 local defaultInfos = {
@@ -24,11 +29,13 @@ local defaultInfos = {
 	--serial_nb = "Unknown",
 	--manufacturer = "Unknown",
 	--modelName = "Unknown",
-	status = "Not present",
+	status = Battery.NOTPRESENT,
 	perc = "N/A",
 	timeLeft = "N/A",
 	watt = "N/A",
 }
+
+
 local infos = {}
 
 
@@ -80,9 +87,9 @@ local function getTimeLeft()
 	end
 
 	local time_rat = 0
-	if infos.status == "Charging" then
+	if infos.status == Battery.CHARGING then
 		time_rat = (tot - rem) / rate
-	elseif infos.status == "Discharging" then
+	elseif infos.status == Battery.DISCHARGING then
 		time_rat = rem / rate
 	end
 
@@ -231,6 +238,13 @@ function Battery.init(options)
 end
 
 Battery.infos = infos
+
+Eventemitter.on("config::load", function()
+	Battery:emit("percentage::changed", Battery.infos.perc)
+	Battery:emit("status::changed", Battery.infos.status)
+	Battery:emit("timeLeft::changed", Battery.infos.timeLeft)
+	Battery:emit("watt::changed", Battery.infos.watt)
+end)
 
 return setmetatable(Battery, {
 	__call = function(_, ...)
