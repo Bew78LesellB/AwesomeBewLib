@@ -23,13 +23,13 @@ local function runOnce(cmd)
 	if firstspace then
 		findme = cmd:sub(0, firstspace - 1)
 	end
-	awful.util.spawn_with_shell("pgrep -u $USER -x " .. findme .. " > /dev/null || (" .. cmd .. ")")
+	spawn_with_shell("pgrep -u $USER -x " .. findme .. " > /dev/null || (" .. cmd .. ")")
 end
 
 local function run(cmd)
 	if not cmd then return end
 
-	awful.util.spawn_with_shell(cmd)
+	spawn_with_shell(cmd)
 end
 
 
@@ -37,6 +37,13 @@ end
 
 function Autorun.add(cmd)
 	if not cmd then return end
+	if type(cmd) == "table" then
+		for _, c in ipairs(cmd) do
+			Autorun.add(c)
+		end
+		return
+	end
+	if not type(cmd) == "string" then return end
 
 	if listCmdRun[cmd] then
 		return
@@ -45,8 +52,15 @@ function Autorun.add(cmd)
 	listCmdRun[cmd] = #listCmdRun
 end
 
-function Autorun.addOnce()
+function Autorun.addOnce(cmd)
 	if not cmd then return end
+	if type(cmd) == "table" then
+		for _, c in ipairs(cmd) do
+			Autorun.addOnce(c)
+		end
+		return
+	end
+	if not type(cmd) == "string" then return end
 
 	if listCmdRunOnce[cmd] then
 		return
@@ -56,7 +70,7 @@ function Autorun.addOnce()
 end
 
 
-Eventemitter.on("config%loaded", function()
+Eventemitter.on("config::load", function()
 	for _, cmd in ipairs(listCmdRunOnce) do
 		runOnce(cmd)
 	end
