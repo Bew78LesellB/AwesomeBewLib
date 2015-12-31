@@ -9,17 +9,39 @@ local lain_async = require("lain.asyncshell")
 -- Module environement
 local async = {}
 
+local debug = require("bewlib.utils.toast").debug
+
 local function lain_async_request(cmd, callback)
-	return lain_async.request(cmd, callback)
+	return lain_async.request(cmd, function(stdout)
+		if #stdout == 0 then
+			callback(nil)
+		end
+		callback(stdout)
+	end)
 end
 
-function async.getAll(cmd, callback)
-	lain_async_request(cmd, callback)
+function async.getAll(cmd, userCallback, allowNil)
+	lain_async_request(cmd, function(stdout)
+		if not stdout then
+			if allowNil then
+				userCallback(nil)
+			end
+			return
+		end
+		userCallback(stdout)
+	end)
 end
 
 
-function async.getLine(cmd, lineNo, callback)
+function async.getLine(cmd, lineNo, userCallback, allowNil)
 	return lain_async_request(cmd, function(stdout)
+		if not stdout then
+			if allowNil then
+				userCallback(nil)
+			end
+			return
+		end
+
 		local i = 1
 		local line
 		for line in stdout:gmatch("[^\r\n]+") do
@@ -31,20 +53,27 @@ function async.getLine(cmd, lineNo, callback)
 		if not i == lineNo then
 			return
 		end
-		callback(line)
+		userCallback(line)
 	end)
 end
 
-function async.getFirstLine(cmd, callback)
+function async.getFirstLine(cmd, userCallback, allowNil)
 	return lain_async_request(cmd, function(stdout)
+		if not stdout then
+			if allowNil then
+				userCallback(nil)
+			end
+			return
+		end
+
 		local line = stdout:match("^[^\n]*")
-		callback(line)
+		userCallback(line)
 	end)
 end
 
-function async.justExec(cmd, callback)
+function async.justExec(cmd, userCallback)
 	return lain_async_request(cmd, function(stdout)
-		callback()
+		userCallback()
 	end)
 end
 
