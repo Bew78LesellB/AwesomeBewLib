@@ -173,21 +173,13 @@ local function updateDynamicsInfos()
 		infos[u.fieldname] = infos.present and u.func() or defaultInfos[u.fieldname]
 	end
 
-	local file = io.open(os.getenv("HOME") .. "/awesome.debug", "a")
-
 	-- emit event for changes if any
 	for key, u in pairs(updateTab) do
 		if old[u.fieldname] and old[u.fieldname] ~= infos[u.fieldname] then
 			local param = nil
 			if key == "percentage" then param = infos.perc end
-			if file then
-				file:write("[" .. os.date() .. "] update: " .. key .. "\n")
-			end
 			Battery:emit(u.eventname .. "::changed", infos[u.fieldname], param)
 		end
-	end
-	if file then
-		file:close()
 	end
 end
 
