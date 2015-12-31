@@ -79,13 +79,29 @@ function Keymap.prototype:add(bind)
 	end
 
 	local modifier = parseModifiers(self._modifiers, bind.ctrl.mod) or {}
+
+	local press_callback = nil
+	local release_callback = nil
+
+	if bind.press then
+		press_callback = function(...)
+			bind.press(self, ...)
+		end
+	end
+
+	if bind.release then
+		release_callback = function(...)
+			bind.release(self, ...)
+		end
+	end
+
 	table.insert(self._keys, {
 		bind = bind,
 		--TODO: awful.button for buttons
 
 		-- TODO: directly use capi.key() ?
 		-- FIXME: awful.key can return multiple keys !!
-		key = awful.key(modifier, bind.ctrl.key, function(...) bind.press(self, ...) end, function(...) bind.release(self, ...) end)
+		key = awful.key(modifier, bind.ctrl.key, press_callback , release_callback)
 	})
 
 	return self
