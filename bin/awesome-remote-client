@@ -2,27 +2,11 @@
 
 local Socket = require("socket")
 local MsgPack = require("MessagePack")
+local AmRemote = require("awesome-remote")
 
 if #arg == 0 then
 	print()
-	print("USAGE : " .. arg[0] .. " <serverPort> [OPTION]")
-	print()
-	print("  OPTION is one of :")
-	print("    --eval <code>")
-	print("    --event <name> [<args> ...] ")
-	print()
-	os.exit(false)
-end
-
-local host = "localhost"
-local port = tonumber(arg[1])
-
-local tcp = assert(Socket.tcp())
-local success, status = tcp:connect(host, port)
-if status == "connection refused" then
-	print()
-	print("Cannot connect to server on " .. host .. ":" .. port)
-	print("You must first start the server.lua")
+	print("USAGE : " .. arg[0] .. " <eventName>")
 	print()
 	os.exit(false)
 end
@@ -32,8 +16,6 @@ end
 ------------------------------------------
 -- finish awesome-remote-client to use in shell like :
 --
--- echo "return tostring(awesome)" | awesome-remote-client --eval
---
 -- awesome-remote-client --event "my::event" <<EOF
 --     {
 --         arg1 = "value1",
@@ -41,69 +23,24 @@ end
 --         arg3 = "value3",
 --     }
 -- EOF
---
--- TODO: validation rules when passing args for --event (and --eval ?)
---
--- TODO replace char '\n' by "\n" (in strings only), when --eval (need when --event ?)
---
--- TODO: how to choose a awesome instance when there is two ? (for an eval)
--- TODO: put/get more infos to/from /tmp/awesome-remote-bewlib/* files
-
-------------------------------------------
-
-local data = {
-	format = "awesome",
-	type = "event",
-	data = {
-		name = "socket",
-		args = {
-			arg1 = "value1",
-			arg2 = "value2",
-			arg3 = "value3",
-		}
-	}
-}
-
---[[
-local data = {
-	format = "awesome",
-	type = "eval",
-	data = "return tostring(awesome) .. '\nbla'",
-}
---]]
 
 ------------------------------------------
 
 
-print("sending...")
-local packet = MsgPack.pack(data)
-local msg, status = tcp:send(string.len(packet) .. "\n")
-local msg, status = tcp:send(packet)
-print("sent")
 
-if data.type == "eval" then
-	print("receiving...")
-	local packetLength, status = tcp:receive("*l")
-	print("length = " .. packetLength)
-	local packet, status = tcp:receive(packetLength)
-	print("recieved")
 
-	dataBack = MsgPack.unpack(packet)
-	if dataBack then
-		print("#== Data Returned ==#")
-		for k, v in ipairs(dataBack) do
-			print(k .. " → " .. tostring(v))
-		end
-		for k, v in pairs(dataBack) do
-			if type(v) ~= "number" or v < 1 then
-				print(k .. " → " .. tostring(v))
-			end
-		end
-	end
-
-	if status == "closed" then
-		print("Server closed")
-	end
+local eventName = arg[1]
+local eventArgs
+if arg[2] then
+	eventArgs = assert(loadstring("return " .. arg[2]))()
 end
 
+AmRemote.init()
+print("sending...")
+local status = AmRemote.sendEvent(eventName, eventArgs)
+print("sent")
+
+------------------------------------------
+
 print("success", status and "status: " .. status or "")
+
