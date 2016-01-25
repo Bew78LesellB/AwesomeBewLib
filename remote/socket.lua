@@ -210,7 +210,8 @@ local function checkSocketCallback()
 		-- Read as much as possible each clients input
 		while canReadClient(client) do
 
-			clientReceive(client, connectedClients[client])
+			local clientInfo = connectedClients[client]
+			clientReceive(client, clientInfo)
 
 			if clientInfo.state == ClientState.CLOSED then
 				removeClient(client)
