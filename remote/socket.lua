@@ -38,8 +38,6 @@ local ClientState = {
 }
 
 
-
-
 -- Event format :
 --
 -- event = {
@@ -57,7 +55,7 @@ end
 --
 -- packet = {
 -- .   format = "awesome",
--- .   type = "event" or "eval",
+-- .   type = "event"
 -- .   data = ...     -- Put the data you want here
 -- }
 local function dispatchPacket(packet, client)
@@ -239,11 +237,7 @@ local function setServerPort(port)
 	if oldPort then
 		-- remove old server port
 		local oldPortPath = getPortPath(oldPort)
-		local file = io.open(oldPortPath, "r")
-		if file then
-			file:close()
-			os.remove(oldPortPath)
-		end
+		os.remove(oldPortPath)
 	end
 
 	-- reset to nil
