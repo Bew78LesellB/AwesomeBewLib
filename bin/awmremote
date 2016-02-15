@@ -3,10 +3,10 @@
 local capi
 
 function require_init()
-		-- Grab environment
-		capi = {
-			print = print,
-		}
+	-- Grab environment
+	capi = {
+		print = print,
+	}
 end
 
 require_init()
@@ -16,31 +16,49 @@ local MsgPack = require("MessagePack")
 
 if #arg == 0 then
 	print()
-	print("USAGE : " .. arg[0] .. " <eventName>")
+	print("USAGE : " .. arg[0] .. " [--in] <eventName> [<eventArgs>]")
+	print()
+	print([[awmremote "my::event" "'my string'"]])
+	print([[awmremote "my::event" "{ arg1 = 42 }"]])
+	print()
+	print([[Use options '--in-table' or '--in-string' to send argument through stdin]])
+	print()
+	print([[awmremote --in-table "my::event" <<EOF]])
+	print([[    {]])
+	print([[        arg1 = "value1",]])
+	print([[        arg2 = "value2",]])
+	print([[        arg3 = "value3",]])
+	print([[    }]])
+	print([[EOF]])
 	print()
 	os.exit(false)
 end
 
-------------------------------------------
--- to use in shell like :
---
--- awesome-remote-client "my::event" <<EOF
---     {
---         arg1 = "value1",
---         arg2 = "value2",
---         arg3 = "value3",
---     }
--- EOF
-------------------------------------------
-
 local AwmRemote
+
+--
+-- Main function
+--
 
 function main(arg)
 
-	local eventName = arg[1]
-	local eventArgs
-	if arg[2] then
-		eventArgs = assert(loadstring("return " .. arg[2]))()
+	local eventName = arg[1] -- i.e "my::event"
+	local strEventArgs, eventArgs
+
+	if eventName == "--in-string" or eventName == "--in-table" then
+		if eventName == "--in-string" then
+			eventArgs = io.read("*a")
+		elseif eventName == "--in-table" then
+			strEventArgs = io.read("*a")
+		end
+		eventName = arg[2]
+	else
+		strEventArgs = arg[2]
+	end
+
+	if not eventArgs and strEventArgs then
+		local f = assert( loadstring("return " .. tostring(strEventArgs)) )
+		eventArgs = f()
 	end
 
 	AwmRemote.init({verbose = true})
@@ -53,6 +71,10 @@ function main(arg)
 	print("success", status and "status: " .. tostring(status) or "")
 
 end
+
+--
+-- Locally Required Packages
+--
 
 function require_func(package)
 
@@ -144,12 +166,13 @@ function require_func(package)
 		local function sendToAllServers(data)
 			if not servers then return false end
 
+			local all_ok = true
 			for _, serverInfo in ipairs(servers) do
 				if not sendToServer(serverInfo, data) then
-					return false
+					all_ok = false
 				end
 			end
-			return true
+			return all_ok
 		end
 
 		-- Public functions
