@@ -1,0 +1,3 @@
+[submodule "ideas-repo"]
+	path = ideas-repo
+	url = git@github.com:Bew78LesellB/AwesomeBewLibIdeas.git
