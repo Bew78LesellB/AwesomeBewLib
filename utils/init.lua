@@ -45,28 +45,41 @@ end
 -- @return (table) containing the lines read from file
 function utils.readFile(path, nbLine)
 	nbLine = type(nbLine) == "number" and nbLine or false
+
 	local f = io.open(path)
 	if not f then return nil end
-	local tab = {}
-	if not nbLine then
-		for line in f:lines() do
-			table.insert(tab, line)
+
+	local lines = {}
+	local line_num = 1
+	for line in f:lines() do
+		table.insert(lines, line)
+		if nbLine and nbLine == line_num then
+			break
 		end
-	else
-		local i = 1
-		for line in f:lines() do
-			table.insert(tab, line)
-			if nbLine == i then
-				break
-			end
-			i = i + 1
-		end
+		line_num = line_num + 1
 	end
 	f:close()
-	return tab
+	return lines
 end
 
 utils.dump = require("gears.debug").dump_return
+
+local logpath = "/tmp/awesome.log"
+local logfile = io.open(logpath, "a+")
+if logfile then
+	logfile:write("#==> Awesome start [" .. os.date() .. "]\n")
+end
+
+function utils.log(...)
+	if not logfile then return end
+
+	local args = {...}
+	logfile:write(os.date("%H:%M") .. " > ");
+	for _, obj in ipairs(args) do
+		logfile:write(utils.dump(obj))
+	end
+	logfile:write("\n");
+end
 
 
 utils.async = require("bewlib.utils.async")
