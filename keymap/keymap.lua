@@ -9,11 +9,12 @@ local debug = require("gears.debug").dump_return
 -- Module environement
 local Keymap = {
 	mt = {},
-	_keymaps = {},
 }
 Keymap = Eventemitter(Keymap)
 
 Keymap.prototype = Eventemitter({})
+
+local keymaps = {}
 
 local defaultModifiers = {
 	M = "Mod4",
@@ -67,16 +68,21 @@ end
 
 --[[ Usage
 mykeymap:add({
-	ctrl = { mod = "MS", key = "c" },
-	press = function(self, c)
-		c:kill()
-	end,
+.   ctrl = { mod = "MS", key = "c" },
+.   press = function(self, c)
+.   .   c:kill()
+.   end,
 })
 ]]--
 function Keymap.prototype:add(bind)
 	if not bind or not type(bind) == "table" or not type(bind.ctrl) == "table" then
 		return
 	end
+
+	-- TODO: handle : ctrl = {
+	--     { mod = "M", key = "j" },
+	--     { mod = "M", key = "Left" },
+	-- }
 
 	local modifier = parseModifiers(self._modifiers, bind.ctrl.mod) or {}
 
@@ -111,22 +117,19 @@ end
 function Keymap.prototype:apply(options) --TODO: refactor
 	if not options then options = {} end
 
-	local mode = options.mode or "normal"
 	local filter = options.filter or "key"
 	local result = {}
 
-	if mode == "normal" then
-		for _, info in ipairs(self._keys) do
-			local tab
-			if filter == "key" and info.key then
-				tab = info.key
-			elseif filter == "button" and info.button then
-				tab = info.button
-			end
-			if tab then
-				for _, v in ipairs(tab) do
-					table.insert(result, v)
-				end
+	for _, info in ipairs(self._keys) do
+		local tab
+		if filter == "key" and info.key then
+			tab = info.key
+		elseif filter == "button" and info.button then
+			tab = info.button
+		end
+		if tab then
+			for _, v in ipairs(tab) do
+				table.insert(result, v)
 			end
 		end
 	end
@@ -147,7 +150,7 @@ function Keymap.get(name)
 	if not name then
 		return nil
 	end
-	return Keymap._keymaps[name]
+	return keymaps[name]
 end
 
 
@@ -172,7 +175,7 @@ function Keymap.new(name, options)
 	}
 
 	newKeymap = utils.table.merge(newKeymap, Keymap.prototype)
-	Keymap._keymaps[name] = newKeymap
+	keymaps[name] = newKeymap
 	return newKeymap
 end
 

@@ -75,13 +75,13 @@ local function getTimeLeft()
 	if not infos.present then return defaultInfos.timeLeft end
 
 	local path = Battery.path
-	local rem   = firstline(path .. "/energy_now") or firstline(path .. "/charge_now")
-	local tot   = firstline(path .. "/energy_full") or firstline(path .. "/charge_full")
-	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
+	local rem  = firstline(path .. "/energy_now") or firstline(path .. "/charge_now")
+	local tot  = firstline(path .. "/energy_full") or firstline(path .. "/charge_full")
+	local rate = firstline(path .. "/power_now") or firstline(path .. "/current_now")
 
-	rate  = tonumber(rate) or 1
-	rem   = tonumber(rem)
-	tot   = tonumber(tot)
+	rate = tonumber(rate) or 1
+	rem  = tonumber(rem)
+	tot  = tonumber(tot)
 	if not rem or not tot then
 		return defaultInfos.timeLeft
 	end

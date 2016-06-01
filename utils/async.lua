@@ -9,8 +9,6 @@ local lain_async = require("lain.asyncshell")
 -- Module environement
 local async = {}
 
-local debug = require("bewlib.utils.toast").debug
-
 local function lain_async_request(cmd, callback)
 	return lain_async.request(cmd, function(stdout)
 		if #stdout == 0 then
@@ -42,18 +40,14 @@ function async.getLine(cmd, lineNo, userCallback, allowNil)
 			return
 		end
 
-		local i = 1
-		local line
+		local line_num = 1
 		for line in stdout:gmatch("[^\r\n]+") do
-			if i == lineNo then
+			if line_num == lineNo then
+				userCallback(line)
 				break
 			end
-			i = i + 1
+			line_num = line_num + 1
 		end
-		if not i == lineNo then
-			return
-		end
-		userCallback(line)
 	end)
 end
 
@@ -77,4 +71,4 @@ function async.justExec(cmd, userCallback)
 	end)
 end
 
-return setmetatable(async, { __call = async.just_exec })
+return setmetatable(async, { __call = async.justExec })
