@@ -2,9 +2,11 @@
 
 local capi = {
 	timer = timer,
+	awesome = awesome,
 }
 
 local Eventemitter = require("bewlib.eventemitter")
+local Utils = require("bewlib.utils")
 
 -- TODO: make this require safe
 -- if the 'socket' module isn't not available,
@@ -15,7 +17,7 @@ local MsgPack = require("MessagePack")
 local RemoteSocket = Eventemitter{}
 
 local serverSock = nil
-local serverPort = nil
+local serverPort = 0
 local connectedClients = {}
 
 local remotePortDir = "/tmp/awesome-remote"
@@ -106,7 +108,6 @@ local function addClient(client)
 
 	table.insert(connectedClients, client)
 	connectedClients[client] = {
-		position = #connectedClients,
 		state = ClientState.WAITING_LENGTH,
 	}
 end
@@ -119,7 +120,7 @@ local function removeClient(client)
 
 	local clientInfo = connectedClients[client]
 	if clientInfo then
-		table.remove(connectedClients, clientInfo.position)
+		table.remove(connectedClients, Utils.table.get_ipos(connectedClients, client))
 		connectedClients[client] = nil
 	end
 end
@@ -264,15 +265,16 @@ end
 --
 ------------------------------------------
 local function initSocket()
+	local _, err
 
 	serverSock = LuaSocket.tcp()
 
-	local success, err = serverSock:bind("localhost", 0) -- select a random port
+	_, err = serverSock:bind("localhost", serverPort) -- select a random port
 	if err then
 		return nil, err
 	end
 
-	local success, err = serverSock:listen(256)
+	_, err = serverSock:listen(256)
 	if err then
 		return nil, err
 	end
@@ -313,31 +315,33 @@ end
 --
 ------------------------------------------
 function RemoteSocket.enable()
-	if not isRunning() then
-		checker.timer = capi.timer({ timeout = checker.interval })
-		checker.timer:connect_signal("timeout", checkSocketCallback)
-		checker.timer:start()
-
-		local success, err = initSocket()
-		if err then
-			checker.timer:stop()
-			checker.timer = nil
-			return false
-		end
-
+	if isRunning() then
+		return true
 	end
-	return true
+
+	checker.timer = capi.timer({ timeout = checker.interval })
+	checker.timer:connect_signal("timeout", checkSocketCallback)
+	checker.timer:start()
+
+	local _, err = initSocket()
+	if not err then
+		return true
+	end
+
+	checker.timer:stop()
+	checker.timer = nil
+	return false
 end
 
 ------------------------------------------
 --
 ------------------------------------------
 function RemoteSocket.disable()
-	if isRunning() then
-		checker.timer:stop()
-		checker.timer = nil
-		closeSocket()
-	end
+	if not isRunning() then return end
+
+	checker.timer:stop()
+	checker.timer = nil
+	closeSocket()
 end
 
 ------------------------------------------
@@ -355,7 +359,7 @@ function RemoteSocket.getPort()
 end
 
 
-awesome.connect_signal("exit", function(restart)
+capi.awesome.connect_signal("exit", function(restart)
 	RemoteSocket.disable()
 end)
 

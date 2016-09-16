@@ -25,20 +25,24 @@ end
 -- @param deep (boolean) Go recursive through tables ? (default: false)
 -- @param new (boolean) Return a clone of base table ? (default: false)
 -- @return (table) a merge of tbl and toMerge tables
-function table.merge(tbl, toMerge, deep, new)
-	if not tbl then
+function table.merge(tbl, toMerge, options)
+	local opt = options or {}
+	opt.deep = opt.deep ~= nil or false
+	opt.new = opt.new ~= nil or false
+
+	if not table.is_table(tbl) then
 		tbl = {}
 	end
-	if type(tbl) ~= "table" or type(toMerge) ~= "table" then
-		return nil
+	if type(toMerge) ~= "table" then
+		return nil -- return tbl ?
 	end
-	if new then
+	if opt.new then
 		tbl = table.clone(tbl, true)
 	end
 	for k, v in pairs(toMerge) do
 		if type(v) == "table" then
-			if tbl[k] and deep then
-				tbl[k] = table.merge(tbl[k], v, true, true)
+			if tbl[k] and opt.deep then
+				tbl[k] = table.merge(tbl[k], v, {deep = true, new = true})
 			else
 				tbl[k] = table.clone(v, true)
 			end
@@ -49,14 +53,48 @@ function table.merge(tbl, toMerge, deep, new)
 	return tbl
 end
 
-function table.hasIPairs(tbl)
-	if not tbl or not type(tbl) == "table" then
-		return false
+function table.is_iempty(tbl)
+	local inext = ipairs(tbl)
+
+	return inext(tbl) == nil
+end
+
+function table.is_empty(tbl)
+	return next(tbl) == nil
+end
+
+function table.is_table(tbl)
+	return tbl and type(tbl) == "table"
+end
+
+function table.get_ipos(tbl, value)
+	for i, v in ipairs(tbl) do
+		if v == value then
+			return i
+		end
 	end
-	for _ in ipairs(tbl) do
-		return true
+	return nil
+end
+
+function table.get_key_for(tbl, value)
+	for k, v in pairs(tbl) do
+		if v == value then
+			return k
+		end
 	end
-	return false
+	return nil
+end
+
+function table.has_ivalue(tbl, value)
+	return table.get_ipos(tbl, value) and true or false
+end
+
+function table.has_ipairs(tbl)
+	return #tbl > 0
+end
+
+function table.has_pairs(tbl)
+	return next(tbl) ~= nil
 end
 
 return table

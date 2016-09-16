@@ -111,8 +111,8 @@ end
 --
 -- @return (Position) The Position object
 function Position.addBuiltin(name, pos)
-	if not type(name) == "string" then
-		return nil
+	if not type(name) == "string" and name ~= "" then
+		error("Position name should be a valid string")
 	end
 
 	name = name:upper()

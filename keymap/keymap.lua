@@ -183,6 +183,7 @@ end
 function Keymap.mt:__call(...)
 	Keymap.new(...)
 	--change to Keymap.get(...) ?
+	--or new if Keymap with the given name doesnt exist
 end
 
 Keymap = setmetatable(Keymap, Keymap.mt)
