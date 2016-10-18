@@ -93,11 +93,7 @@ end
 -- PUBLIC FUNCTIONS
 
 function Command.register(cmdID, options)
-	print("Command.register " .. cmdID)
-	local grp
-
 	if not options then
-		print("No options given")
 		return nil
 	end
 	if type(options) == "function" then
@@ -105,12 +101,10 @@ function Command.register(cmdID, options)
 			callback = options,
 		}
 	elseif not checkRegisterOptionsOK(options) then
-		print("Cannot register '" .. cmdID .. "', bad params")
 		utils.toast.error("Cannot register '" .. cmdID .. "', bad params")
 		return nil
 	end
 
-	print("registering action")
 	return registerAction(cmdID, options)
 end
 

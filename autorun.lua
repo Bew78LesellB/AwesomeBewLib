@@ -1,6 +1,6 @@
 
 -- Grab dependencies
-local spawn_with_shell = require("awful.util").spawn_with_shell
+local spawn = require("awful.spawn")
 --local Object = require("object")
 local Eventemitter = require("bewlib.eventemitter")
 
@@ -18,18 +18,18 @@ local listCmdRun = {}
 local function runOnce(cmd)
 	if not cmd then return end
 
-	findme = cmd
-	firstspace = cmd:find(" ")
+	local findme = cmd
+	local firstspace = cmd:find(" ")
 	if firstspace then
 		findme = cmd:sub(0, firstspace - 1)
 	end
-	spawn_with_shell("pgrep -u $USER -x " .. findme .. " > /dev/null || (" .. cmd .. ")")
+	spawn.with_shell("pgrep -u $USER -x " .. findme .. " > /dev/null || (" .. cmd .. ")")
 end
 
 local function run(cmd)
 	if not cmd then return end
 
-	spawn_with_shell(cmd)
+	spawn.with_shell(cmd)
 end
 
 

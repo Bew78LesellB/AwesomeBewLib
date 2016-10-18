@@ -4,13 +4,13 @@
 -- Grab environement
 
 -- Module dependencies
-local lain_async = require("lain.asyncshell")
+local awful_spawn = require("awful.spawn")
 
 -- Module environement
 local async = {}
 
-local function lain_async_request(cmd, callback)
-	return lain_async.request(cmd, function(stdout)
+local function async_request(cmd, callback)
+	return awful_spawn.easy_async(cmd, function(stdout)
 		if #stdout == 0 then
 			callback(nil)
 		end
@@ -19,7 +19,7 @@ local function lain_async_request(cmd, callback)
 end
 
 function async.getAll(cmd, userCallback, allowNil)
-	lain_async_request(cmd, function(stdout)
+	async_request(cmd, function(stdout)
 		if not stdout then
 			if allowNil then
 				userCallback(nil)
@@ -30,9 +30,8 @@ function async.getAll(cmd, userCallback, allowNil)
 	end)
 end
 
-
 function async.getLine(cmd, lineNo, userCallback, allowNil)
-	return lain_async_request(cmd, function(stdout)
+	return async_request(cmd, function(stdout)
 		if not stdout then
 			if allowNil then
 				userCallback(nil)
@@ -52,7 +51,7 @@ function async.getLine(cmd, lineNo, userCallback, allowNil)
 end
 
 function async.getFirstLine(cmd, userCallback, allowNil)
-	return lain_async_request(cmd, function(stdout)
+	return async_request(cmd, function(stdout)
 		if not stdout then
 			if allowNil then
 				userCallback(nil)
@@ -65,10 +64,4 @@ function async.getFirstLine(cmd, userCallback, allowNil)
 	end)
 end
 
-function async.justExec(cmd, userCallback)
-	return lain_async_request(cmd, function(stdout)
-		userCallback()
-	end)
-end
-
-return setmetatable(async, { __call = async.justExec })
+return async

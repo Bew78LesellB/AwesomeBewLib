@@ -184,7 +184,7 @@ local function updateDynamicsInfos()
 end
 
 --- Update all battery infos
-function updateAll()
+local function updateAll()
 	infos.present = isPresent()
 	updateDynamicsInfos()
 end
@@ -199,11 +199,9 @@ end
 --          - "watt"
 -- @return (table) the battery infos
 function Battery.update(what)
-	local oldvalue = nil
 	if what == "all" then
 		updateAll()
 	elseif type(what) == "string" and updateTab[what] then
-		oldvalue = infos[what]
 		updateTab[what].func()
 	elseif type(what) == "table" then
 		for _, v in ipairs(what) do

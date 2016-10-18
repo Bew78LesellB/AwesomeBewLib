@@ -2,9 +2,7 @@
 
 
 -- Grab environement
-local capi = {
-	timer = timer
-}
+local gears = require("gears")
 
 -- Module environement
 local utils = {}
@@ -14,13 +12,13 @@ local utils = {}
 -- @param timeout time to wait before callback exec in second (can be a float)
 -- @return The new timer
 function utils.setTimeout(callback, timeout)
-	local theTimer = capi.timer({ timeout = timeout })
-	theTimer:connect_signal("timeout", function()
-		theTimer:stop()
+	local timer = gears.timer({ timeout = timeout })
+	timer:connect_signal("timeout", function()
+		timer:stop()
 		callback()
 	end)
-	theTimer:start()
-	return theTimer
+	timer:start()
+	return timer
 end
 
 --- Run a callback every N seconds
@@ -29,13 +27,13 @@ end
 -- @param callAtStart if set, callback will be called at timer start
 -- @return The new timer
 function utils.setInterval(callback, interval, callAtStart)
-	local theTimer = capi.timer({ timeout = interval })
-	theTimer:connect_signal("timeout", callback)
-	theTimer:start()
+	local timer = gears.timer({ timeout = interval })
+	timer:connect_signal("timeout", callback)
+	timer:start()
 	if callAtStart == true then
 		callback()
 	end
-	return theTimer
+	return timer
 end
 
 --- Read N lines of a given file
@@ -63,6 +61,7 @@ function utils.readFile(path, nbLine)
 end
 
 utils.dump = require("gears.debug").dump_return
+utils.inspect = require("inspect")
 
 local logpath = "/tmp/awesome.log"
 local logfile = io.open(logpath, "a+")
@@ -73,12 +72,14 @@ end
 function utils.log(...)
 	if not logfile then return end
 
-	local args = {...}
-	logfile:write(os.date("%H:%M") .. " > ");
-	for _, obj in ipairs(args) do
-		logfile:write(utils.dump(obj))
+	logfile:write("LOG " .. os.date("%H:%M") .. " > ")
+	io.stderr:write("LOG " .. os.date("%H:%M") .. " > ")
+	for _, obj in ipairs({...}) do
+		logfile:write(utils.inspect(obj))
+		io.stderr:write(utils.inspect(obj))
 	end
 	logfile:write("\n");
+	io.stderr:write("\n");
 end
 
 

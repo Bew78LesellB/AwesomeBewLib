@@ -1,9 +1,9 @@
 --TODO: copy the default _ENV
 
 local capi = {
-	timer = timer,
 	awesome = awesome,
 }
+local gears = require("gears")
 
 local Eventemitter = require("bewlib.eventemitter")
 local Utils = require("bewlib.utils")
@@ -319,7 +319,7 @@ function RemoteSocket.enable()
 		return true
 	end
 
-	checker.timer = capi.timer({ timeout = checker.interval })
+	checker.timer = gears.timer({ timeout = checker.interval })
 	checker.timer:connect_signal("timeout", checkSocketCallback)
 	checker.timer:start()
 
