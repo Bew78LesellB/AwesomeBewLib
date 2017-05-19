@@ -58,6 +58,10 @@ function WallSelector.prototype:select(wall_path)
 	end
 end
 
+function WallSelector.prototype:current()
+	return self.history:get_at(self.history_cursor)
+end
+
 --- Create a wallpaper selector
 function WallSelector.new(config)
 	config = config or {}
