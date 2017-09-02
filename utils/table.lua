@@ -19,13 +19,13 @@ function table.clone(tbl, deep)
     return c
 end
 
---- Merge a table into another
+--- Merge a table into another, does not overwrite values in *tbl*
 -- @param tbl (table) the base table
--- @param toMerge (table) contain the fields to set/add in tbl
+-- @param defaults (table) contain the fields to set/add in tbl
 -- @param deep (boolean) Go recursive through tables ? (default: false)
 -- @param new (boolean) Return a clone of base table ? (default: false)
--- @return (table) a merge of tbl and toMerge tables
-function table.merge(tbl, toMerge, options)
+-- @return (table) a merge of tbl and defaults tables
+function table.merge(tbl, defaults, options)
 	local opt = options or {}
 	opt.deep = opt.deep ~= nil or false
 	opt.new = opt.new ~= nil or false
@@ -33,20 +33,20 @@ function table.merge(tbl, toMerge, options)
 	if not table.is_table(tbl) then
 		tbl = {}
 	end
-	if type(toMerge) ~= "table" then
+	if type(defaults) ~= "table" then
 		return nil -- return tbl ?
 	end
 	if opt.new then
 		tbl = table.clone(tbl, true)
 	end
-	for k, v in pairs(toMerge) do
+	for k, v in pairs(defaults) do
 		if type(v) == "table" then
 			if tbl[k] and opt.deep then
 				tbl[k] = table.merge(tbl[k], v, {deep = true, new = true})
 			else
 				tbl[k] = table.clone(v, true)
 			end
-		else
+        elseif tbl[k] == nil then
 			tbl[k] = v
 		end
 	end
