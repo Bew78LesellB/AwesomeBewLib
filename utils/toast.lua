@@ -40,9 +40,12 @@ function toast.error(text, options)
 		border_width = 0,
 		bg = "#F44336",
 		fg = "#FFEBEE",
+        traceback = true,
 	}
 	options = merge(options or {}, default)
-	text = tostring(text) .. "\n\n" .. std.debug.traceback()
+    if options.traceback then
+        text = tostring(text) .. "\n\n" .. std.debug.traceback()
+    end
 	return dotoast(text, options)
 end
 
