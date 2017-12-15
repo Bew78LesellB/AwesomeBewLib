@@ -36,7 +36,7 @@ function WallCache.prototype:scan(callback)
 			table.insert(self.wallpapers, wall_path)
 		end
 
-		if nb_dir_scan_finished == #self.wallpaper_dirs then
+		if nb_dir_scan_finished == #self.wallpaper_dirs and type(callback) == "function" then
 			-- all wallpapers directories have been scanned, trigger the callback
 			callback(self.wallpapers)
 		end
