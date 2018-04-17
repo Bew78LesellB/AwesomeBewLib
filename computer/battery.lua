@@ -14,6 +14,7 @@ local Eventemitter = require("bewlib.eventemitter")
 local Battery = {
 	name = nil,
 	path = nil,
+    disabled = false,
 }
 Battery = Eventemitter(Battery)
 
@@ -165,9 +166,17 @@ local function updateDynamicsInfos()
 	local old = utils.table.clone(infos)
 
 	-- get the new infos
-	for _, u in pairs(updateTab) do
-		infos[u.fieldname] = infos.present and u.func() or defaultInfos[u.fieldname]
-	end
+    if Battery.disabled then
+        -- While ACPI is broken, don't update battery info so we don't freeze awesome
+        -- TODO: FIX ACPI ISSUES!!!!
+        infos.perc = 0
+        infos.status = "ACPI BROKEN"
+        infos.timeLeft = 0
+    else
+        for _, u in pairs(updateTab) do
+            infos[u.fieldname] = infos.present and u.func() or defaultInfos[u.fieldname]
+        end
+    end
 
 	-- emit event for changes if any
 	for key, u in pairs(updateTab) do
