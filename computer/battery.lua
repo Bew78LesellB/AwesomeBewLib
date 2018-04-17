@@ -25,10 +25,6 @@ Battery.UNKNOWN_STATUS = "Unknown"
 -- private vars
 local defaultInfos = {
 	present = false,
-	--techno = "Unknown",
-	--serial_nb = "Unknown",
-	--manufacturer = "Unknown",
-	--modelName = "Unknown",
 	status = Battery.NOTPRESENT,
 	perc = "N/A",
 	timeLeft = "N/A",
