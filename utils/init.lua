@@ -80,6 +80,7 @@ function utils.log(...)
 	end
 	logfile:write("\n");
 	io.stderr:write("\n");
+	logfile:flush();
 end
 
 
