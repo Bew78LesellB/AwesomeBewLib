@@ -26,6 +26,7 @@ local function remove_metatable(instance)
   return setmetatable(instance, nil)
 end
 
+--- Wraps an existing table, making it an Array type
 function Array.from_table(table)
   table = table or {}
   table.__class = Array
@@ -73,6 +74,19 @@ function Array.prototype:insert(idx, item)
   end
   table.insert(self, idx, item)
   return item
+end
+
+function Array.prototype:includes(value)
+  self:any(function(item) return item == value end)
+end
+
+function Array.prototype:any(callback)
+  for idx, item in ipairs(self) do
+    if callback(item, idx) then
+      return true
+    end
+  end
+  return false
 end
 
 function Array.prototype:each(callback)
