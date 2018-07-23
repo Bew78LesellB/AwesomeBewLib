@@ -1,3 +1,6 @@
+local capi = {
+  keygrabber = keygrabber,
+}
 local wibox = require("wibox")
 local awful = require("awful")
 
@@ -70,6 +73,23 @@ function ActionMenu.prototype:_build_menu()
 
   w = actions_list_wibox -- tmp
   return w
+end
+
+function Array.prototype:_make_grabber()
+  return function(mods, key, event)
+    mods = Array.from_table(mods)
+
+    -- Wait for a "press" event, discard the rest
+    if not event == "press" then return true end
+
+
+    -- Shifted key does't close the menu
+    if not mods:includes "shift" then
+      capi.keygrabber.stop()
+    end
+
+    -- ...
+  end
 end
 
 function ActionMenu.prototype:show(config)
