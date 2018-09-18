@@ -12,7 +12,7 @@ local Utils = require("bewlib.utils")
 -- if the 'socket' module isn't not available,
 -- this will throw an exception...
 local LuaSocket = require("socket")
-local MsgPack = require("MessagePack")
+local MsgPack = require("mpack")
 
 local RemoteSocket = Eventemitter{}
 
