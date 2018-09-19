@@ -64,6 +64,8 @@ function Array.prototype:unsafe_set(idx, value)
 end
 
 function Array.prototype:append(item)
+  print("Array#append: self is")
+  print(self)
   table.insert(self, item)
   return item
 end
@@ -90,6 +92,8 @@ function Array.prototype:any(callback)
 end
 
 function Array.prototype:each(callback)
+  print("Array#each: self is")
+  print(self)
   for idx, item in ipairs(self) do
     callback(item, idx)
   end

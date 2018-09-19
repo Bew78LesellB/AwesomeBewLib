@@ -49,7 +49,7 @@ function ActionMenu.prototype:_build_menu()
   local actions_setup = Array.from_table {
     layout = wibox.layout.fixed.vertical,
   }
-  self._actions.each(function(act)
+  self._actions:each(function(act)
     actions_setup:append({
       {
         text = act.key,
@@ -88,7 +88,7 @@ function Array.prototype:_make_grabber()
       capi.keygrabber.stop()
     end
 
-    -- ...
+    -- 
   end
 end
 
