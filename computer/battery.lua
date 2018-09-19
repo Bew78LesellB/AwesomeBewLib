@@ -28,8 +28,6 @@ local defaultInfos = {
 	present = false,
 	status = Battery.NOTPRESENT,
 	perc = "N/A",
-	timeLeft = "N/A",
-	watt = "N/A",
 }
 
 
@@ -66,39 +64,6 @@ local function isPresent()
 	return present == "1" and true or false
 end
 
---- Get time to full or time to empty
--- @return (string) time to full if charging, time to empty if discharging
-local function getTimeLeft()
-	if not infos.present then return defaultInfos.timeLeft end
-
-	local path = Battery.path
-	local rem  = firstline(path .. "/energy_now") or firstline(path .. "/charge_now")
-	local tot  = firstline(path .. "/energy_full") or firstline(path .. "/charge_full")
-	local rate = firstline(path .. "/power_now") or firstline(path .. "/current_now")
-
-	rate = tonumber(rate) or 1
-	rem  = tonumber(rem)
-	tot  = tonumber(tot)
-	if not rem or not tot then
-		return defaultInfos.timeLeft
-	end
-
-	local time_rat = 0
-	if infos.status == Battery.CHARGING then
-		time_rat = (tot - rem) / rate
-	elseif infos.status == Battery.DISCHARGING then
-		time_rat = rem / rate
-	end
-
-	local hrs = math.floor(time_rat)
-	if hrs < 0 then hrs = 0 elseif hrs > 23 then hrs = 23 end
-
-	local min = math.floor((time_rat - hrs) * 60)
-	if min < 0 then min = 0 elseif min > 59 then min = 59 end
-
-	return string.format("%02d:%02d", hrs, min)
-end
-
 --- Get battery percentage
 -- @return (number) the battery capacity percentage
 local function getPercentage()
@@ -122,22 +87,6 @@ local function getPercentage()
 	return perc
 end
 
---- Get battery power
--- @return (string) the battery power, in Watt
-local function getWatt()
-	local path  = Battery.path
-	local rate  = firstline(path .. "/power_now") or firstline(path .. "/current_now")
-	local ratev = firstline(path .. "/voltage_now")
-
-	rate  = tonumber(rate) or 1
-	ratev = tonumber(ratev)
-
-	if rate and ratev then
-		return string.format("%.2fW", (rate * ratev) / 1e12)
-	end
-	return defaultInfos.watt
-end
-
 local updateTab = {
 	percentage = {
 		func = getPercentage,
@@ -148,16 +97,6 @@ local updateTab = {
 		func = getStatus,
 		eventname = "status",
 		fieldname = "status"
-	},
-	timeLeft = {
-		func = getTimeLeft,
-		eventname = "timeLeft",
-		fieldname = "timeLeft"
-	},
-	watt = {
-		func = getWatt,
-		eventname = "watt",
-		fieldname = "watt"
 	},
 }
 
@@ -171,7 +110,6 @@ local function updateDynamicsInfos()
         -- TODO: FIX ACPI ISSUES!!!!
         infos.perc = 0
         infos.status = "ACPI BROKEN"
-        infos.timeLeft = 0
     else
         for _, u in pairs(updateTab) do
             infos[u.fieldname] = infos.present and u.func() or defaultInfos[u.fieldname]
@@ -199,9 +137,7 @@ end
 --        can be :
 --          - "all"
 --          - "percentage"
---          - "timeLeft"
 --          - "status"
---          - "watt"
 -- @return (table) the battery infos
 function Battery.update(what)
 	if what == "all" then
@@ -237,8 +173,6 @@ Battery.infos = infos
 Eventemitter.on("config::load", function()
 	Battery:emit("percentage::changed", Battery.infos.perc)
 	Battery:emit("status::changed", Battery.infos.status)
-	Battery:emit("timeLeft::changed", Battery.infos.timeLeft)
-	Battery:emit("watt::changed", Battery.infos.watt)
 end)
 
 return setmetatable(Battery, {
