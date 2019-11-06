@@ -18,6 +18,7 @@ local Battery = {
 }
 Battery = Eventemitter(Battery)
 
+Battery.FULL = "Full"
 Battery.DISCHARGING = "Discharging"
 Battery.CHARGING = "Charging"
 Battery.NOTPRESENT = "Not Present"
